@@ -1,7 +1,8 @@
 package dataplatform.cache.sequence.impl;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
 
 import dataplatform.cache.redis.CacheOnRedis;
 import dataplatform.cache.sequence.IInstanceIdMaker;
@@ -18,7 +19,7 @@ public class RedisIdManager extends CacheOnRedis implements IInstanceIdManager {
 
 	public RedisIdManager(String redisHostContent) {
 		super(redisHostContent);
-		idMakers = new HashMap<String, IInstanceIdMaker>();
+		idMakers = Maps.newHashMap();
 	}
 
 	@Override

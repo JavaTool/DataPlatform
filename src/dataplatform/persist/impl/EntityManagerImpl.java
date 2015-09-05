@@ -1,7 +1,6 @@
 package dataplatform.persist.impl;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,8 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.proxy.HibernateProxy;
 
+import com.google.common.collect.Maps;
+
 import dataplatform.persist.DataAccessException;
 import dataplatform.persist.IEntityManager;
 
@@ -25,9 +26,9 @@ public class EntityManagerImpl implements IEntityManager {
 	
 	private SessionFactory sessionFactory;
 	
-	private HashMap<String, EntityPersister> entityPersisters;
+	private Map<String, EntityPersister> entityPersisters;
 	
-	private HashMap<String, Lock> locks;
+	private Map<String, Lock> locks;
 	
 	public EntityManagerImpl(Configuration conf) {
 		this.conf = conf;
@@ -42,7 +43,7 @@ public class EntityManagerImpl implements IEntityManager {
 			conf.configure();
 		}
 		sessionFactory = conf.buildSessionFactory();
-		entityPersisters = new HashMap<String,EntityPersister>();
+		entityPersisters = Maps.newHashMap();
 		Iterator ite = sessionFactory.getAllClassMetadata().entrySet().iterator(); 
 		while (ite.hasNext()) {
 			Map.Entry entry = (Map.Entry) ite.next();
@@ -53,7 +54,7 @@ public class EntityManagerImpl implements IEntityManager {
 	}
 	
 	private void initLocks() {
-		locks = new HashMap<String,Lock>();
+		locks = Maps.newHashMap();
 		Iterator<String> ite = entityPersisters.keySet().iterator();
 		while (ite.hasNext()) {
 			String entityName = ite.next();
@@ -104,11 +105,6 @@ public class EntityManagerImpl implements IEntityManager {
 			createSync(en);
 		}
 	}
-	
-//	private Serializable getEntityIdentifier(String entityName, Object entity, EntityMode entityMode) {
-//		EntityPersister eper = entityPersisters.get(entityName);
-//		return eper.getIdentifier(entity, entityMode);
-//	}
 
 	@Override
 	public void deleteSync(Serializable entity) {
@@ -145,7 +141,6 @@ public class EntityManagerImpl implements IEntityManager {
 		Lock lock = getLock(entityName);
 		lock.lock();
 		try {
-//			Serializable id = getEntityIdentifier(entityName, entity, EntityMode.POJO);
 			Session session = getSession();
 			Transaction tx = session.beginTransaction();
 			try {

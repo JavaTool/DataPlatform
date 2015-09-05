@@ -5,9 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.google.common.collect.Lists;
 
 /**
  * 序列化工具
@@ -80,7 +81,7 @@ public class SerializaUtil {
 	 */
 	public static List<Serializable> deserializable(List<byte[]> list) throws Exception {
 		int size = list.size();
-		List<Serializable> ret = new ArrayList<Serializable>(size);
+		List<Serializable> ret = Lists.newArrayListWithCapacity(size);
 		for (int i = 0;i < size;i++) {
 			ret.add(deserializable(list.get(i)));
 		}

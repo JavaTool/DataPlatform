@@ -1,9 +1,11 @@
 package dataplatform.cache.sequence.impl;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import redis.clients.jedis.ShardedJedis;
+
+import com.google.common.collect.Maps;
+
 import dataplatform.cache.redis.CacheOnShardedRedis;
 import dataplatform.cache.sequence.IInstanceIdManager;
 import dataplatform.util.SerializaUtil;
@@ -14,7 +16,7 @@ public class ShardedRedisIdManager extends CacheOnShardedRedis implements IInsta
 
 	public ShardedRedisIdManager(String redisHostContent, int max) {
 		super(redisHostContent, max);
-		keys = new HashMap<String, byte[]>();
+		keys = Maps.newHashMap();
 	}
 
 	@Override

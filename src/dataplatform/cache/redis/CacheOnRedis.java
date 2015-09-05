@@ -1,7 +1,6 @@
 package dataplatform.cache.redis;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
+
+import com.google.common.collect.Lists;
+
 import dataplatform.cache.ICache;
 import dataplatform.cache.sequence.ICounter;
 import dataplatform.util.SerializaUtil;
@@ -77,7 +79,7 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 			return SerializaUtil.deserializable(list);
 		} catch (Exception e) {
 			log.error("", e);
-			return new ArrayList<Serializable>();
+			return Lists.newArrayList();
 		}
 	}
 
