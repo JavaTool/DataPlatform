@@ -1,4 +1,4 @@
-package cache;
+package dataplatform.cache;
 
 import java.io.Serializable;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cache.persist.EntityManager;
+import dataplatform.persist.EntityManager;
 
 /**
  * 会持久化的任务缓存

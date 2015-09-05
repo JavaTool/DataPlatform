@@ -1,4 +1,4 @@
-package cache.persist;
+package dataplatform.persist;
 
 import java.io.Serializable;
 import java.util.List;

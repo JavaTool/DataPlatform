@@ -1,4 +1,4 @@
-package cache;
+package dataplatform.cache;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import cache.persist.EntityManager;
+import dataplatform.persist.EntityManager;
 
 /**
  * 可以重加载的任务缓存器

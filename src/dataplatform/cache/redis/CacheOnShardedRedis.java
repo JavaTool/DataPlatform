@@ -1,4 +1,4 @@
-package cache.redis;
+package dataplatform.cache.redis;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,8 +15,8 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisShardInfo;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
-import cache.ICache;
-import cache.sequence.ICounter;
+import dataplatform.cache.ICache;
+import dataplatform.cache.sequence.ICounter;
 
 /**
  * Redis组缓存器

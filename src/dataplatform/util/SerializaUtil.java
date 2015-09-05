@@ -1,4 +1,4 @@
-package cache.util;
+package dataplatform.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

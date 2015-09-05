@@ -1,4 +1,4 @@
-package cache;
+package dataplatform.cache;
 
 import java.io.Serializable;
 import java.util.List;
@@ -7,7 +7,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import cache.persist.EntityManager;
+import dataplatform.persist.EntityManager;
 
 /**
  * 普通的计划任务缓存

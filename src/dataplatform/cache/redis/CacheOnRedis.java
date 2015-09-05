@@ -1,4 +1,4 @@
-package cache.redis;
+package dataplatform.cache.redis;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
-import cache.ICache;
-import cache.sequence.ICounter;
-import cache.util.SerializaUtil;
+import dataplatform.cache.ICache;
+import dataplatform.cache.sequence.ICounter;
+import dataplatform.util.SerializaUtil;
 
 /**
  * Redis缓存器

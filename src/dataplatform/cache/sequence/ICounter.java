@@ -1,4 +1,4 @@
-package cache.sequence;
+package dataplatform.cache.sequence;
 
 /**
  * 计数器

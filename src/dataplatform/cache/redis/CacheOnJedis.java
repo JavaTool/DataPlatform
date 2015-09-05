@@ -1,4 +1,4 @@
-package cache.redis;
+package dataplatform.cache.redis;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.BinaryJedisCommands;
 import redis.clients.jedis.JedisCommands;
-import cache.ICache;
-import cache.util.SerializaUtil;
+import dataplatform.cache.ICache;
+import dataplatform.util.SerializaUtil;
 
 public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends JedisCommands> implements ICache {
 	
