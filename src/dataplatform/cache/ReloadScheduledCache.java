@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import dataplatform.persist.EntityManager;
+import dataplatform.persist.IEntityManager;
 
 /**
  * 可以重加载的任务缓存器
@@ -25,7 +25,7 @@ public class ReloadScheduledCache extends PersistenceCache {
 	/**同步锁*/
 	private final Lock lock;
 	
-	public ReloadScheduledCache(ICache cache, EntityManager entityManager, Serializable preKey) {
+	public ReloadScheduledCache(ICache cache, IEntityManager entityManager, Serializable preKey) {
 		super(cache, entityManager);
 		
 		createSync = makeCreateSync(preKey);

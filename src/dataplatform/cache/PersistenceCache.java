@@ -9,7 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dataplatform.persist.EntityManager;
+import dataplatform.persist.IEntityManager;
 
 /**
  * 会持久化的任务缓存
@@ -21,11 +21,11 @@ public abstract class PersistenceCache implements IScheduledCache {
 	/**缓存*/
 	protected final ICache cache;
 	/**持久化管理器*/
-	protected final EntityManager entityManager;
+	protected final IEntityManager entityManager;
 	/**任务*/
 	protected ScheduledFuture<?> scheduledFuture;
 	
-	public PersistenceCache(ICache cache, EntityManager entityManager) {
+	public PersistenceCache(ICache cache, IEntityManager entityManager) {
 		this.cache = cache;
 		this.entityManager = entityManager;
 	}

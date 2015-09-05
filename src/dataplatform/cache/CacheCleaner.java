@@ -1,11 +1,12 @@
 package dataplatform.cache;
 
 import java.io.Serializable;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
 
 /**
  * 缓存清理器
@@ -29,7 +30,7 @@ public class CacheCleaner {
 	 * @return	缓存键容器组
 	 */
 	protected List<ICacheKeyContainer> createContainers() {
-		return new LinkedList<ICacheKeyContainer>();
+		return Lists.newLinkedList();
 	}
 	
 	/**

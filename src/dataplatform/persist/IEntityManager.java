@@ -3,7 +3,7 @@ package dataplatform.persist;
 import java.io.Serializable;
 import java.util.List;
 
-public interface EntityManager {
+public interface IEntityManager {
 
 	/**
 	 * @note ͬ���Ĵ�������

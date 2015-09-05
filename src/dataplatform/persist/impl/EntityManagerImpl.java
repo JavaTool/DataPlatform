@@ -17,9 +17,9 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.proxy.HibernateProxy;
 
 import dataplatform.persist.DataAccessException;
-import dataplatform.persist.EntityManager;
+import dataplatform.persist.IEntityManager;
 
-public class EntityManagerImpl implements EntityManager {
+public class EntityManagerImpl implements IEntityManager {
 	
 	private Configuration conf;
 	

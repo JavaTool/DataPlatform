@@ -1,13 +1,18 @@
 package dataplatform.cache;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import dataplatform.persist.EntityManager;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+
+import dataplatform.persist.IEntityManager;
 
 /**
  * 普通的计划任务缓存
@@ -22,27 +27,27 @@ public class ScheduledCache extends PersistenceCache {
 	/**删除-计划任务的键队列*/
 	private final Queue<Serializable> deleteKeys;
 	/**创建-计划任务的名称队列集合*/
-	private final Map<Serializable, Queue<Serializable>> createHmap;
+	private final Multimap<Serializable, Serializable> createHmap;
 	/**更新-计划任务的名称队列集合*/
-	private final Map<Serializable, Queue<Serializable>> updateHmap;
+	private final Multimap<Serializable, Serializable> updateHmap;
 	/**删除-计划任务的名称队列集合*/
-	private final Map<Serializable, Queue<Serializable>> deleteHmap;
+	private final Multimap<Serializable, Serializable> deleteHmap;
 	/**键的持久化后是否删除缓存的标志集合*/
 	private final Map<Serializable, Boolean> keyCaches;
 	/**名称的持久化后是否删除缓存的标志集合*/
 	private final Map<Serializable, Boolean> nameCaches;
 	
-	public ScheduledCache(ICache cache, EntityManager entityManager) {
+	public ScheduledCache(ICache cache, IEntityManager entityManager) {
 		super(cache, entityManager);
 		
 		createKeys = new ConcurrentLinkedQueue<Serializable>();
 		updateKeys = new ConcurrentLinkedQueue<Serializable>();
 		deleteKeys = new ConcurrentLinkedQueue<Serializable>();
-		createHmap = new ConcurrentHashMap<Serializable, Queue<Serializable>>();
-		updateHmap = new ConcurrentHashMap<Serializable, Queue<Serializable>>();
-		deleteHmap = new ConcurrentHashMap<Serializable, Queue<Serializable>>();
-		keyCaches = new ConcurrentHashMap<Serializable, Boolean>();
-		nameCaches = new ConcurrentHashMap<Serializable, Boolean>();
+		createHmap = LinkedListMultimap.create();
+		updateHmap = LinkedListMultimap.create();
+		deleteHmap = LinkedListMultimap.create();
+		keyCaches = Maps.newConcurrentMap();
+		nameCaches = Maps.newConcurrentMap();
 	}
 	
 	@Override
@@ -50,7 +55,7 @@ public class ScheduledCache extends PersistenceCache {
 		while (createKeys.size() > 0) {
 			Serializable key = createKeys.poll();
 			if (createHmap.containsKey(key)) { // HSet
-				Queue<Serializable> queue = createHmap.get(key);
+				Collection<Serializable> queue = createHmap.get(key);
 				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
 				List<Serializable> list = hmGet(key, names);
 				entityManager.createSync(list.toArray(new Serializable[list.size()]));
@@ -69,14 +74,14 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	queue
 	 * 			名称队列
 	 */
-	protected void tryDeleteCache(Serializable key, Queue<Serializable> queue) {
-		int size = queue.size();
-		for (int i = 0;i < size;i++) {
-			Serializable name = queue.poll();
-			if (!nameCaches.containsKey(name) || nameCaches.get(name)) {
-				queue.add(name);
+	protected void tryDeleteCache(Serializable key, Collection<Serializable> queue) {
+		Collection<Serializable> waitRemoves = Lists.newLinkedList();
+		for (Serializable name : queue) {
+			if (nameCaches.containsKey(name) && !nameCaches.get(name)) {
+				waitRemoves.add(name);
 			}
 		}
+		waitRemoves.removeAll(waitRemoves);
 		Serializable[] names = queue.toArray(new Serializable[queue.size()]);
 		hdel(key, names);
 	}
@@ -97,7 +102,7 @@ public class ScheduledCache extends PersistenceCache {
 		while (updateKeys.size() > 0) {
 			Serializable key = updateKeys.poll();
 			if (updateHmap.containsKey(key)) {
-				Queue<Serializable> queue = updateHmap.get(key);
+				Collection<Serializable> queue = updateHmap.get(key);
 				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
 				List<Serializable> list = hmGet(key, names);
 				entityManager.updateSync(list.toArray(new Serializable[list.size()]));
@@ -114,7 +119,7 @@ public class ScheduledCache extends PersistenceCache {
 		while (deleteKeys.size() > 0) {
 			Serializable key = deleteKeys.poll();
 			if (deleteHmap.containsKey(key)) {
-				Queue<Serializable> queue = deleteHmap.get(key);
+				Collection<Serializable> queue = deleteHmap.get(key);
 				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
 				List<Serializable> list = hmGet(key, names);
 				entityManager.updateSync(list.toArray(new Serializable[list.size()]));
@@ -160,7 +165,7 @@ public class ScheduledCache extends PersistenceCache {
 
 	@Override
 	public synchronized void addHScheduledCreate(Serializable key, Serializable name, Serializable value, boolean deleteCache) {
-		if (getHNameList(key, deleteHmap).contains(name)) {
+		if (deleteHmap.containsValue(name)) {
 			addHScheduled(key, name, updateKeys, updateHmap);
 		} else {
 			addHScheduled(key, name, createKeys, createHmap);
@@ -172,7 +177,7 @@ public class ScheduledCache extends PersistenceCache {
 
 	@Override
 	public synchronized void addHScheduledUpdate(Serializable key, Serializable name, Serializable value, boolean deleteCache) {
-		if (!getHNameList(key, createHmap).contains(name) && !getHNameList(key, deleteHmap).contains(name)) {
+		if (!createHmap.containsValue(name) && !deleteHmap.containsValue(name)) {
 			addHScheduled(key, name, updateKeys, updateHmap);
 			saveDeleteNameCache(key, deleteCache);
 		}
@@ -181,28 +186,10 @@ public class ScheduledCache extends PersistenceCache {
 
 	@Override
 	public synchronized void addHScheduledDelete(Serializable key, Serializable name, Serializable value) {
-		getHNameList(key, createHmap).remove(name);
-		getHNameList(key, updateHmap).remove(name);
+		createHmap.remove(key, name);
+		updateHmap.remove(key, name);
 		addHScheduled(key, name, deleteKeys, deleteHmap);
 		scheduledHSet(key, name, value);
-	}
-	
-	/**
-	 * 获取哈希名称队列
-	 * @param 	key
-	 * 			键
-	 * @param 	hmap
-	 * 			哈希名称队列集合
-	 * @return	哈希名称队列
-	 */
-	protected Queue<Serializable> getHNameList(Serializable key, Map<Serializable, Queue<Serializable>> hmap) {
-		if (hmap.containsKey(key)) {
-			return hmap.get(key);
-		} else {
-			Queue<Serializable> queue = new ConcurrentLinkedQueue<Serializable>();
-			hmap.put(key, queue);
-			return queue;
-		}
 	}
 	
 	/**
@@ -212,7 +199,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	key
 	 * 			键
 	 */
-	protected void queueAdd(Queue<Serializable> queue, Serializable key) {
+	protected void queueAdd(Collection<Serializable> queue, Serializable key) {
 		if (!queue.contains(key)) {
 			queue.add(key);
 		}
@@ -229,9 +216,9 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	hmap
 	 * 			名称队列集合
 	 */
-	protected void addHScheduled(Serializable key, Serializable name, Queue<Serializable> keys, Map<Serializable, Queue<Serializable>> hmap) {
+	protected void addHScheduled(Serializable key, Serializable name, Queue<Serializable> keys, Multimap<Serializable, Serializable> hmap) {
 		queueAdd(keys, key);
-		queueAdd(getHNameList(key, hmap), name);
+		hmap.put(key, name);
 	}
 
 	/**
