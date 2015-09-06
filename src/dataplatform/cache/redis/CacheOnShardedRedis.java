@@ -9,13 +9,14 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisShardInfo;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
+
+import com.google.common.collect.Lists;
+
 import dataplatform.cache.ICache;
 import dataplatform.cache.sequence.ICounter;
 
@@ -104,7 +105,7 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
 			return Long.parseLong(sharded.get(key));
 		} catch (Exception e) {
 			log.error("", e);
-			return 0;
+			throw new RedisException(e);
 		} finally {
 			jedis.returnResourceObject(sharded);
 		}

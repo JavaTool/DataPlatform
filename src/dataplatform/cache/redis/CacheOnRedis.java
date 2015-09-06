@@ -8,9 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
-
-import com.google.common.collect.Lists;
-
 import dataplatform.cache.ICache;
 import dataplatform.cache.sequence.ICounter;
 
@@ -78,7 +75,7 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 			return deserializable(list);
 		} catch (Exception e) {
 			log.error("", e);
-			return Lists.newArrayList();
+			throw new RedisException(e);
 		}
 	}
 

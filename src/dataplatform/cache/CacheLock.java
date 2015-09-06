@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
 public class CacheLock implements Lock {
 	
 	private static final Logger log = LoggerFactory.getLogger(CacheLock.class);
-	
+	/**缓存器*/
 	private final ICache cache;
-	
+	/**锁键*/
 	private final String key;
-	
+	/**锁超时时间*/
 	private final long time;
 	
 	public CacheLock(ICache cache, String key, long time) {

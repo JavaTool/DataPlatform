@@ -11,12 +11,13 @@ import java.util.Set;
  */
 public interface ICache {
 	
+	/**不存在时set*/
 	String SET_NX = "NX";
-	
+	/**存在时set*/
 	String SET_XX = "XX";
-	
+	/**set超时-秒*/
 	String SET_EX = "EX";
-	
+	/**set超时-毫秒*/
 	String SET_PX = "PX";
 	
 	/**

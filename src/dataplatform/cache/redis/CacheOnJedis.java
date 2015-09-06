@@ -8,16 +8,22 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
 import redis.clients.jedis.BinaryJedisCommands;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCommands;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
 import dataplatform.cache.ICache;
 import dataplatform.util.SerializaUtil;
 
+/**
+ * Jedis缓存器
+ * @author 	fuhuiyuan
+ * @param 	<B>
+ * @param 	<J>
+ */
 public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends JedisCommands> implements ICache {
 	
 	protected static final Logger log = LoggerFactory.getLogger(CacheOnJedis.class);
@@ -52,7 +58,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return jedis.exists(serializable(key));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return false;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -65,7 +71,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return jedis.hexists(serializable(key), serializable(name));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return false;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -130,7 +136,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return deserializable(jedis.get(serializable(key)));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return null;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -143,7 +149,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return deserializable(jedis.hget(serializable(key), serializable(name)));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return null;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -158,7 +164,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return deserializable(list);
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return Lists.newArrayList();
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -198,7 +204,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return jedis.hlen(serializable(key));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return 0;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -216,7 +222,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return ret;
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return null;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -234,7 +240,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return keys;
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return null;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -247,7 +253,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return jedis.set(key, value, nxxx, expx, time);
 		} catch(Exception e) {
 			log.error("error on key " + key, e);
-			return null;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
@@ -261,7 +267,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 			return jedis instanceof Jedis ? ((Jedis) jedis).pttl(key) : jedis.ttl(key);
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return 0;
+			throw new RedisException(e);
 		} finally {
 			useFinish(jedis);
 		}
