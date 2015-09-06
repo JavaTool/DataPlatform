@@ -287,4 +287,10 @@ public class ScheduledCache extends PersistenceCache {
 		}
 	}
 
+	@Override
+	public void clearScheduled() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

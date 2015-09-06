@@ -11,6 +11,14 @@ import java.util.Set;
  */
 public interface ICache {
 	
+	String SET_NX = "NX";
+	
+	String SET_XX = "XX";
+	
+	String SET_EX = "EX";
+	
+	String SET_PX = "PX";
+	
 	/**
 	 * 判断是否存在键
 	 * @param 	key
@@ -39,12 +47,23 @@ public interface ICache {
 	 * 存储一个对象
 	 * @param 	key
 	 * 			键
-	 * @param 	object
+	 * @param 	value
 	 * 			对象
-	 * @param 	timeout
-	 * 			过期时间（秒）
+	 * @param 	nxxx
+	 * 			允许存在/不许存在
+	 * @param 	expx
+	 * 			秒/毫秒
+	 * @param 	time
+	 * 			时间
 	 */
-	void set(Serializable key, Serializable object, int timeout);
+	String set(String key, String value, String nxxx, String expx, long time);
+	/**
+	 * 获取剩余时间
+	 * @param 	key
+	 * 			键
+	 * @return	剩余时间
+	 */
+	long ttl(String key);
 	/**
 	 * 以哈希的方式存储一个对象
 	 * @param 	key
@@ -75,6 +94,12 @@ public interface ICache {
 	 * 			键
 	 */
 	void del(Serializable key);
+	/**
+	 * 删除一个键所对应的内容
+	 * @param 	key
+	 * 			键
+	 */
+	void del(String key);
 	/**
 	 * 删除一个键所对应的哈希名称的内容
 	 * @param 	key

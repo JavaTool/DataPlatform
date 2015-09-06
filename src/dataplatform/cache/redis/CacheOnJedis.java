@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.BinaryJedisCommands;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCommands;
 import dataplatform.cache.ICache;
 import dataplatform.util.SerializaUtil;
@@ -203,18 +204,6 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	}
 
 	@Override
-	public void set(Serializable key, Serializable object, int timeout) {
-		B jedis = getBinaryJedisCommands();
-		try {
-			jedis.setex(SerializaUtil.serializable(key), timeout, SerializaUtil.serializable(object));
-		} catch (Exception e) {
-			log.error("error on key " + key, e);
-		} finally {
-			useFinish(jedis);
-		}
-	}
-
-	@Override
 	public Map<Serializable, Serializable> hGetAll(Serializable key) {
 		B jedis = getBinaryJedisCommands();
 		try {
@@ -245,6 +234,45 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 			return null;
+		} finally {
+			useFinish(jedis);
+		}
+	}
+	
+	@Override
+	public String set(String key, String value, String nxxx, String expx, long time) {
+		J jedis = getJedisCommands();
+		try {
+			return jedis.set(key, value, nxxx, expx, time);
+		} catch(Exception e) {
+			log.error("error on key " + key, e);
+			return null;
+		} finally {
+			useFinish(jedis);
+		}
+	}
+	
+	@Override
+	public long ttl(String key) {
+		J jedis = getJedisCommands();
+		try {
+			log.info((jedis instanceof Jedis ? ((Jedis) jedis).pttl(key) : jedis.ttl(key)) + " : " + jedis.getClass());
+			return jedis instanceof Jedis ? ((Jedis) jedis).pttl(key) : jedis.ttl(key);
+		} catch (Exception e) {
+			log.error("error on key " + key, e);
+			return 0;
+		} finally {
+			useFinish(jedis);
+		}
+	}
+	
+	@Override
+	public void del(String key) {
+		J jedis = getJedisCommands();
+		try {
+			jedis.del(key);
+		} catch (Exception e) {
+			log.error("error on key " + key, e);
 		} finally {
 			useFinish(jedis);
 		}

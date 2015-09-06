@@ -77,5 +77,9 @@ public interface IScheduledCache extends ICache, Runnable {
 	 * 			缓存对象，为空时表示已经缓存过
 	 */
 	void addHScheduledDelete(Serializable key, Serializable name, Serializable value);
+	/**
+	 * 执行并清除所有任务和相关缓存
+	 */
+	void clearScheduled();
 
 }

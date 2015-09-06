@@ -46,11 +46,6 @@ public abstract class PersistenceCache implements IScheduledCache {
 	}
 
 	@Override
-	public void set(Serializable key, Serializable object, int timeout) {
-		cache.set(key, object, timeout);
-	}
-
-	@Override
 	public void hset(Serializable key, Serializable name, Serializable object) {
 		cache.hset(key, name, object);
 	}
@@ -146,5 +141,20 @@ public abstract class PersistenceCache implements IScheduledCache {
 	 * 同步删除
 	 */
 	protected abstract void deleteSync();
+
+	@Override
+	public String set(String key, String value, String nxxx, String expx, long time) {
+		return cache.set(key, value, nxxx, expx, time);
+	}
+
+	@Override
+	public long ttl(String key) {
+		return cache.ttl(key);
+	}
+
+	@Override
+	public void del(String key) {
+		cache.del(key);
+	}
 
 }
