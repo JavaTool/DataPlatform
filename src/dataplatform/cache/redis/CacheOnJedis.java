@@ -1,15 +1,16 @@
 package dataplatform.cache.redis;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import redis.clients.jedis.BinaryJedisCommands;
 import redis.clients.jedis.Jedis;
@@ -48,7 +49,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public boolean exists(Serializable key) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			return jedis.exists(SerializaUtil.serializable(key));
+			return jedis.exists(serializable(key));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 			return false;
@@ -61,7 +62,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public boolean hexists(Serializable key, Serializable name) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			return jedis.hexists(SerializaUtil.serializable(key), SerializaUtil.serializable(name));
+			return jedis.hexists(serializable(key), serializable(name));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 			return false;
@@ -74,7 +75,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public void set(Serializable key, Serializable object) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			jedis.set(SerializaUtil.serializable(key), SerializaUtil.serializable(object));
+			jedis.set(serializable(key), serializable(object));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 		} finally {
@@ -86,7 +87,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public void hset(Serializable key, Serializable name, Serializable object) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			jedis.hset(SerializaUtil.serializable(key), SerializaUtil.serializable(name), SerializaUtil.serializable(object));
+			jedis.hset(serializable(key), serializable(name), serializable(object));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 		} finally {
@@ -98,11 +99,11 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public void hmSet(Serializable key, Map<Serializable, Serializable> map) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			Map<byte[], byte[]> byteMap = new HashMap<byte[], byte[]>();
+			Map<byte[], byte[]> byteMap = Maps.newHashMap();
 			for (Serializable k : map.keySet()) {
-				byteMap.put(SerializaUtil.serializable(k), SerializaUtil.serializable(map.get(k)));
+				byteMap.put(serializable(k), serializable(map.get(k)));
 			}
-			jedis.hmset(SerializaUtil.serializable(key), byteMap);
+			jedis.hmset(serializable(key), byteMap);
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 		} finally {
@@ -114,7 +115,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public void del(Serializable key) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			jedis.del(SerializaUtil.serializable(key));
+			jedis.del(serializable(key));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 		} finally {
@@ -126,7 +127,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public Serializable get(Serializable key) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			return SerializaUtil.deserializable(jedis.get(SerializaUtil.serializable(key)));
+			return deserializable(jedis.get(serializable(key)));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 			return null;
@@ -139,7 +140,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public Serializable hget(Serializable key, Serializable name) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			return SerializaUtil.deserializable(jedis.hget(SerializaUtil.serializable(key), SerializaUtil.serializable(name)));
+			return deserializable(jedis.hget(serializable(key), serializable(name)));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 			return null;
@@ -152,12 +153,12 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public List<Serializable> hmGet(Serializable key, Serializable... names) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			byte[][] nameBytes = SerializaUtil.serializable(names);
-			List<byte[]> list = jedis.hmget(SerializaUtil.serializable(key), nameBytes);
-			return SerializaUtil.deserializable(list);
+			byte[][] nameBytes = serializable(names);
+			List<byte[]> list = jedis.hmget(serializable(key), nameBytes);
+			return deserializable(list);
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
-			return new ArrayList<Serializable>();
+			return Lists.newArrayList();
 		} finally {
 			useFinish(jedis);
 		}
@@ -167,7 +168,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public void hdel(Serializable key, Serializable name) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			jedis.hdel(SerializaUtil.serializable(key), SerializaUtil.serializable(name));
+			jedis.hdel(serializable(key), serializable(name));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 		} finally {
@@ -179,9 +180,9 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public void hmDel(Serializable key, Serializable... names) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			byte[][] nameBytes = SerializaUtil.serializable(names);
+			byte[][] nameBytes = serializable(names);
 			for (byte[] name : nameBytes) {
-				jedis.hdel(SerializaUtil.serializable(key), name);
+				jedis.hdel(serializable(key), name);
 			}
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
@@ -194,7 +195,7 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public long hlen(Serializable key) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			return jedis.hlen(SerializaUtil.serializable(key));
+			return jedis.hlen(serializable(key));
 		} catch (Exception e) {
 			log.error("error on key " + key, e);
 			return 0;
@@ -207,10 +208,10 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public Map<Serializable, Serializable> hGetAll(Serializable key) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			Map<byte[], byte[]> all = jedis.hgetAll(SerializaUtil.serializable(key));
-			Map<Serializable, Serializable> ret = new HashMap<Serializable, Serializable>();
+			Map<byte[], byte[]> all = jedis.hgetAll(serializable(key));
+			Map<Serializable, Serializable> ret = Maps.newHashMap();
 			for (byte[] name : all.keySet()) {
-				ret.put(SerializaUtil.deserializable(name), SerializaUtil.deserializable(all.get(name)));
+				ret.put(deserializable(name), deserializable(all.get(name)));
 			}
 			return ret;
 		} catch (Exception e) {
@@ -225,10 +226,10 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 	public Set<Serializable> hKeys(Serializable key) {
 		B jedis = getBinaryJedisCommands();
 		try {
-			Set<byte[]> bytes = jedis.hkeys(SerializaUtil.serializable(key));
-			Set<Serializable> keys = new HashSet<Serializable>();
+			Set<byte[]> bytes = jedis.hkeys(serializable(key));
+			Set<Serializable> keys = Sets.newHashSet();
 			for (byte[] data : bytes) {
-				keys.add(SerializaUtil.deserializable(data));
+				keys.add(deserializable(data));
 			}
 			return keys;
 		} catch (Exception e) {
@@ -276,6 +277,50 @@ public abstract class CacheOnJedis<B extends BinaryJedisCommands, J extends Jedi
 		} finally {
 			useFinish(jedis);
 		}
+	}
+	
+	/**
+	 * 序列化
+	 * @param 	object
+	 * 			被序列化的对象
+	 * @return	序列化结果
+	 * @throws 	Exception
+	 */
+	protected static byte[] serializable(Serializable object) throws Exception {
+		return SerializaUtil.serializable(object);
+	}
+	
+	/**
+	 * 反序列化
+	 * @param 	datas
+	 * 			序列化内容
+	 * @return	反序列化的对象
+	 * @throws 	Exception
+	 */
+	protected static Serializable deserializable(byte[] datas) throws Exception {
+		return SerializaUtil.deserializable(datas);
+	}
+	
+	/**
+	 * 序列化
+	 * @param 	objects
+	 * 			被序列化的对象集合
+	 * @return	序列化结果
+	 * @throws 	Exception
+	 */
+	protected static byte[][] serializable(Serializable... objects) throws Exception {
+		return SerializaUtil.serializable(objects);
+	}
+	
+	/**
+	 * 反序列化
+	 * @param 	list
+	 * 			序列化内容集合
+	 * @return	反序列化的内容列表
+	 * @throws 	Exception
+	 */
+	protected static List<Serializable> deserializable(List<byte[]> list) throws Exception {
+		return SerializaUtil.deserializable(list);
 	}
 
 }

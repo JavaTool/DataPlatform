@@ -1,7 +1,6 @@
 package dataplatform.cache.redis;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +8,8 @@ import java.util.StringTokenizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPoolConfig;
@@ -40,7 +41,7 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
     protected void setRedisHosts(String redisHostContent, int max){
         StringTokenizer st = new StringTokenizer(redisHostContent, ",");
         int fieldsCount = st.countTokens();
-        Collection<RedisHost> hosts = new ArrayList<RedisHost>(fieldsCount);
+        Collection<RedisHost> hosts = Lists.newArrayListWithCapacity(fieldsCount);
         for (int i = 0; i < fieldsCount; i++){
             String fullHost = st.nextToken().trim();
             String[] hostAndPort = fullHost.split(":");
@@ -50,7 +51,7 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
 
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(max);
-        List<JedisShardInfo> jedisShards = new ArrayList<JedisShardInfo>();
+        List<JedisShardInfo> jedisShards = Lists.newArrayList();
         for(RedisHost redisHost : redisHosts){
             jedisShards.add(new JedisShardInfo(redisHost.getHost(), redisHost.getPort()));
         }
@@ -73,7 +74,7 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
 	@Override
 	public List<Serializable> mGet(Serializable... keys) {
 		int size = keys.length;
-		List<Serializable> list = new ArrayList<Serializable>(size);
+		List<Serializable> list = Lists.newArrayListWithCapacity(size);
 		for (int i = 0;i < keys.length;i++) {
 			list.add(get(keys[i]));
 		}

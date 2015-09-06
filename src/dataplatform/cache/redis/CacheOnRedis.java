@@ -1,7 +1,6 @@
 package dataplatform.cache.redis;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -9,9 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
+
+import com.google.common.collect.Lists;
+
 import dataplatform.cache.ICache;
 import dataplatform.cache.sequence.ICounter;
-import dataplatform.util.SerializaUtil;
 
 /**
  * Redis缓存器
@@ -60,7 +61,7 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 	@Override
 	public void mDel(Serializable... keys) {
 		try {
-			byte[][] keyBytes = SerializaUtil.serializable(keys);
+			byte[][] keyBytes = serializable(keys);
 			for (byte[] key : keyBytes) {
 				getBinaryJedisCommands().del(key);
 			}
@@ -72,12 +73,12 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 	@Override
 	public List<Serializable> mGet(Serializable... keys) {
 		try {
-			byte[][] keyBytes = SerializaUtil.serializable(keys);
+			byte[][] keyBytes = serializable(keys);
 			List<byte[]> list = getBinaryJedisCommands().mget(keyBytes);
-			return SerializaUtil.deserializable(list);
+			return deserializable(list);
 		} catch (Exception e) {
 			log.error("", e);
-			return new ArrayList<Serializable>();
+			return Lists.newArrayList();
 		}
 	}
 
@@ -88,8 +89,8 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 			byte[][] keysvalues = new byte[mapSize << 1][];
 			int index = 0;
 			for (Serializable key : map.keySet()) {
-				keysvalues[index << 1] = SerializaUtil.serializable(key);
-				keysvalues[(index << 1) + 1] = SerializaUtil.serializable(map.get(key));
+				keysvalues[index << 1] = serializable(key);
+				keysvalues[(index << 1) + 1] = serializable(map.get(key));
 				index++;
 			}
 			getBinaryJedisCommands().mset(keysvalues);
