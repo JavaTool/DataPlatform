@@ -13,7 +13,7 @@ import java.io.Serializable;
  * </p>
  * @author 	fuhuiyuan
  */
-public interface IScheduledCache extends ICache, Runnable {
+public interface IScheduledCache extends ICache {
 	
 	/**
 	 * 插入计划任务

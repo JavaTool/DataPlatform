@@ -37,8 +37,8 @@ public class ScheduledCache extends PersistenceCache {
 	/**名称的持久化后是否删除缓存的标志集合*/
 	private final Map<Serializable, Boolean> nameCaches;
 	
-	public ScheduledCache(ICache cache, IEntityManager entityManager) {
-		super(cache, entityManager);
+	public ScheduledCache(ICache cache, IEntityManager entityManager, long delay) {
+		super(cache, entityManager, delay);
 		
 		createKeys = new ConcurrentLinkedQueue<Serializable>();
 		updateKeys = new ConcurrentLinkedQueue<Serializable>();

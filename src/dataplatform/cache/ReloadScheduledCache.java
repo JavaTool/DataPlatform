@@ -24,8 +24,8 @@ public class ReloadScheduledCache extends PersistenceCache {
 	/**同步锁*/
 	private final Lock lock;
 	
-	public ReloadScheduledCache(ICache cache, IEntityManager IEntityManager, Serializable preKey) {
-		super(cache, IEntityManager);
+	public ReloadScheduledCache(ICache cache, IEntityManager entityManager, Serializable preKey, long delay) {
+		super(cache, entityManager, delay);
 		
 		createSync = makeCreateSync(preKey);
 		updateSync = makeUpdateSync(preKey);

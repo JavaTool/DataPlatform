@@ -4,10 +4,12 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.util.concurrent.AbstractScheduledService;
 
 import dataplatform.persist.IEntityManager;
 
@@ -15,19 +17,20 @@ import dataplatform.persist.IEntityManager;
  * 会持久化的任务缓存
  * @author 	fuhuiyuan
  */
-public abstract class PersistenceCache implements IScheduledCache {
+public abstract class PersistenceCache extends AbstractScheduledService implements IScheduledCache {
 	
 	protected static final Logger log = LoggerFactory.getLogger(PersistenceCache.class);
 	/**缓存*/
 	protected final ICache cache;
 	/**持久化管理器*/
 	protected final IEntityManager entityManager;
-	/**任务*/
-	protected ScheduledFuture<?> scheduledFuture;
+	/**运行周期*/
+	protected final long delay;
 	
-	public PersistenceCache(ICache cache, IEntityManager entityManager) {
+	public PersistenceCache(ICache cache, IEntityManager entityManager, long delay) {
 		this.cache = cache;
 		this.entityManager = entityManager;
+		this.delay = delay;
 	}
 
 	@Override
@@ -119,15 +122,6 @@ public abstract class PersistenceCache implements IScheduledCache {
 	public long hlen(Serializable key) {
 		return cache.hlen(key);
 	}
-
-	@Override
-	public void run() {
-		long time = System.currentTimeMillis();
-		createSync();
-		updateSync();
-		deleteSync();
-		log.info("Sync finish use {} ms.", System.currentTimeMillis() - time);
-	}
 	
 	/**
 	 * 同步创建
@@ -143,6 +137,13 @@ public abstract class PersistenceCache implements IScheduledCache {
 	protected abstract void deleteSync();
 
 	@Override
+	public void shutDown() throws Exception {
+		super.shutDown();
+		runOneIteration();
+		log.info("Shutdown finish.");
+	}
+
+	@Override
 	public String set(String key, String value, String nxxx, String expx, long time) {
 		return cache.set(key, value, nxxx, expx, time);
 	}
@@ -155,6 +156,20 @@ public abstract class PersistenceCache implements IScheduledCache {
 	@Override
 	public void del(String key) {
 		cache.del(key);
+	}
+
+	@Override
+	protected void runOneIteration() throws Exception {
+		long time = System.currentTimeMillis();
+		createSync();
+		updateSync();
+		deleteSync();
+		log.info("Sync finish use {} ms.", System.currentTimeMillis() - time);
+	}
+
+	@Override
+	protected Scheduler scheduler() {
+		return Scheduler.newFixedDelaySchedule(0, delay, TimeUnit.MILLISECONDS);
 	}
 
 }
