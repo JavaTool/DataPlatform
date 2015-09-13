@@ -31,6 +31,7 @@ public class CacheLock implements Lock {
 		this.cache = cache;
 		this.key = key;
 		this.time = time;
+		log.info("LockKey : {} , LockTime : {}", key, time);
 	}
 
 	@Override
