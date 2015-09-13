@@ -106,29 +106,19 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
 		} catch (Exception e) {
 			log.error("", e);
 			throw new RedisException(e);
-		} finally {
-			jedis.returnResourceObject(sharded);
 		}
 	}
 
 	@Override
 	public long incr(String key, long value) {
 		ShardedJedis sharded = jedis.getResource();
-		try {
-			return sharded.incrBy(key, value);
-		} finally {
-			jedis.returnResourceObject(sharded);
-		}
+		return sharded.incrBy(key, value);
 	}
 
 	@Override
 	public long decr(String key, long value) {
 		ShardedJedis sharded = jedis.getResource();
-		try {
-			return sharded.decrBy(key, value);
-		} finally {
-			jedis.returnResourceObject(sharded);
-		}
+		return sharded.decrBy(key, value);
 	}
 
 	@Override
@@ -138,8 +128,6 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
 			sharded.del(key);
 		} catch (Exception e) {
 			log.error("", e);
-		} finally {
-			jedis.returnResourceObject(sharded);
 		}
 	}
 
@@ -149,13 +137,19 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
 	}
 
 	@Override
-	public void useFinish(ShardedJedis jedis) {
-		this.jedis.returnResourceObject(jedis);
+	public void useFinishB(ShardedJedis jedis) {
+//		this.jedis.returnResourceObject(jedis);
+		jedis.close();
 	}
 
 	@Override
 	public ShardedJedis getJedisCommands() {
 		return jedis.getResource();
+	}
+
+	@Override
+	public void useFinishJ(ShardedJedis jedis) {
+		jedis.close();
 	}
 
 }

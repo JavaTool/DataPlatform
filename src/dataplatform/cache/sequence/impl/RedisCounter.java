@@ -19,7 +19,7 @@ public class RedisCounter<B extends BinaryJedisCommands, J extends JedisCommands
 		try {
 			return Long.parseLong(jedis.get(key));
 		} finally {
-			cache.useFinish(jedis);
+			cache.useFinishJ(jedis);
 		}
 	}
 
@@ -29,7 +29,7 @@ public class RedisCounter<B extends BinaryJedisCommands, J extends JedisCommands
 		try {
 			return jedis.incrBy(key, value);
 		} finally {
-			cache.useFinish(jedis);
+			cache.useFinishJ(jedis);
 		}
 	}
 
@@ -39,7 +39,7 @@ public class RedisCounter<B extends BinaryJedisCommands, J extends JedisCommands
 		try {
 			return jedis.decrBy(key, value);
 		} finally {
-			cache.useFinish(jedis);
+			cache.useFinishJ(jedis);
 		}
 	}
 
@@ -49,7 +49,7 @@ public class RedisCounter<B extends BinaryJedisCommands, J extends JedisCommands
 		try {
 			jedis.del(key);
 		} finally {
-			cache.useFinish(jedis);
+			cache.useFinishJ(jedis);
 		}
 	}
 

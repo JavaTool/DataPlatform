@@ -56,11 +56,25 @@ public class ReloadScheduledCache extends PersistenceCache {
 					del(_HKey);
 					hmDel(_key, deteleNameList.toArray(new Serializable[deteleNameList.size()])); // 删除所有缓存的哈希对象
 				} else { // set
-					Serializable object = get(_key);
-					if (object != null) {
-						syncList.add(object); // 保存需要持久化的缓存对象
+					String type = type(_key);
+					switch (CacheType.valueOf(type)) {
+					case string : 
+						Serializable object = get(_key);
+						if (object != null) {
+							syncList.add(object); // 保存需要持久化的缓存对象
+						}
+						break;
+					case hash:
+						Map<Serializable, Serializable> all = hGetAll(_key);
+						for (Serializable value : all.values()) {
+							syncList.add(value); // 保存需要持久化的缓存对象
+						}
+						break;
+					default:
+						break;
 					}
-					if (deleteAll || object == null || (Boolean) keyMap.get(_key)) {
+					
+					if (deleteAll || (Boolean) keyMap.get(_key)) {
 						deleteKeyList.add(_key); // 保存要删除的缓存键
 					}
 				}
@@ -350,7 +364,7 @@ public class ReloadScheduledCache extends PersistenceCache {
 	 * 			同步后是否删除缓存
 	 */
 	private void addHScheduled(Sync sync, Serializable key, Serializable name, boolean deleteCache) {
-		hset(sync.getKey(), key, key);
+		hset(sync.getKey(), key, false);
 		hset(sync.makeHKey(key), name, deleteCache);
 	}
 

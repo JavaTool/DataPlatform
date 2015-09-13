@@ -159,6 +159,11 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	}
 
 	@Override
+	public String type(Serializable key) {
+		return cache.type(key);
+	}
+
+	@Override
 	protected void runOneIteration() throws Exception {
 		long time = System.currentTimeMillis();
 		createSync();

@@ -19,6 +19,16 @@ public interface ICache {
 	String SET_EX = "EX";
 	/**set超时-毫秒*/
 	String SET_PX = "PX";
+	/**存储类型：字符串*/
+	String TYPE_STRING = "string";
+	/**存储类型：列表*/
+	String TYPE_LIST = "list";
+	/**存储类型：集合*/
+	String TYPE_SET = "set";
+	/**存储类型：哈希表*/
+	String TYPE_HASH = "hash";
+	/**存储类型：无*/
+	String TYPE_NULL = "none";
 	
 	/**
 	 * 判断是否存在键
@@ -180,5 +190,10 @@ public interface ICache {
 	 * @return	哈希的域长度
 	 */
 	long hlen(Serializable key);
+	/**
+	 * 返回 key 所储存的值的类型。
+	 * @return	none (key不存在)、string (字符串)、list (列表)、set (集合)、hash (哈希表)
+	 */
+	String type(Serializable key);
 
 }

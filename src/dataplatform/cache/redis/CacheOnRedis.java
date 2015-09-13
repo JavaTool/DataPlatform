@@ -104,11 +104,15 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 
 	@Deprecated
 	@Override
-	public void useFinish(Jedis jedis) {}
+	public void useFinishB(Jedis jedis) {}
 
 	@Override
 	public Jedis getJedisCommands() {
 		return jedis;
 	}
+
+	@Deprecated
+	@Override
+	public void useFinishJ(Jedis jedis) {}
 
 }

@@ -1,5 +1,6 @@
 package dataplatform.cache;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -29,6 +30,7 @@ public class CacheLock implements Lock {
 		this.cache = cache;
 		this.key = key;
 		this.time = time;
+		log.info("LockKey : {} , LockTime : {}", key, time);
 	}
 
 	@Override
@@ -57,7 +59,7 @@ public class CacheLock implements Lock {
 	@Override
 	public boolean tryLock() {
 		String result = cache.set(key, key, ICache.SET_NX, ICache.SET_PX, time);
-		return "OK".equals(result);
+		return Objects.equals(result, "OK");
 	}
 
 	@Override
