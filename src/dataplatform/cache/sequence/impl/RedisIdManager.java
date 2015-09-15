@@ -13,12 +13,13 @@ import dataplatform.cache.sequence.IInstanceIdManager;
  * @author	fuhuiyuan
  */
 public class RedisIdManager extends CacheOnRedis implements IInstanceIdManager {
-
+	
 	/**id生成器集合*/
 	protected Map<String, IInstanceIdMaker> idMakers;
-	
+
 	public RedisIdManager(String redisHostContent) {
-		super(redisHostContent);idMakers = Maps.newHashMap();
+		super(redisHostContent);
+		idMakers = Maps.newHashMap();
 	}
 
 	@Override

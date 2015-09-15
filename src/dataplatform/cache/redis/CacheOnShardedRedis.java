@@ -99,36 +99,46 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
 	}
 
 	@Override
-	public long get(String key) {
+	public long getCount(Serializable key) {
 		ShardedJedis sharded = jedis.getResource();
 		try {
-			return Long.parseLong(sharded.get(key));
+			String vaule = (String) deserializable(sharded.get(serializable(key)));
+			return Long.parseLong(vaule == null ? "0" : vaule);
 		} catch (Exception e) {
 			log.error("", e);
-			throw new RedisException(e);
+			return 0L;
 		}
 	}
 
 	@Override
-	public long incr(String key, long value) {
-		ShardedJedis sharded = jedis.getResource();
-		return sharded.incrBy(key, value);
-	}
-
-	@Override
-	public long decr(String key, long value) {
-		ShardedJedis sharded = jedis.getResource();
-		return sharded.decrBy(key, value);
-	}
-
-	@Override
-	public void delete(String key) {
+	public long incr(Serializable key, long value) {
 		ShardedJedis sharded = jedis.getResource();
 		try {
-			sharded.del(key);
+			return sharded.incrBy(serializable(key), value);
 		} catch (Exception e) {
 			log.error("", e);
+			return 0L;
+		} finally {
+			useFinishJ(sharded);
 		}
+	}
+
+	@Override
+	public long decr(Serializable key, long value) {
+		ShardedJedis sharded = jedis.getResource();
+		try {
+			return sharded.decrBy(serializable(key), value);
+		} catch (Exception e) {
+			log.error("", e);
+			return 0L;
+		} finally {
+			useFinishJ(sharded);
+		}
+	}
+
+	@Override
+	public void deleteCount(Serializable key) {
+		del(key);
 	}
 
 	@Override
@@ -150,6 +160,12 @@ public class CacheOnShardedRedis extends CacheOnJedis<ShardedJedis, ShardedJedis
 	@Override
 	public void useFinishJ(ShardedJedis jedis) {
 		jedis.close();
+	}
+
+	@Override
+	public void shutdown() {
+		jedis.close();
+		jedis.destroy();
 	}
 
 }

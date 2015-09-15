@@ -138,8 +138,9 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 
 	@Override
 	public void shutDown() throws Exception {
-		super.shutDown();
 		runOneIteration();
+		cache.shutdown();
+		super.shutDown();
 		log.info("Shutdown finish.");
 	}
 
@@ -175,6 +176,11 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	@Override
 	protected Scheduler scheduler() {
 		return Scheduler.newFixedDelaySchedule(0, delay, TimeUnit.MILLISECONDS);
+	}
+
+	@Override
+	public void shutdown() {
+		cache.shutdown();
 	}
 
 }

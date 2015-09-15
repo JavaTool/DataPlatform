@@ -99,48 +99,76 @@ public class CacheOnJedisPool extends CacheOnJedis<Jedis, Jedis> implements ICou
 	}
 
 	@Override
-	public long get(String key) {
+	public long getCount(Serializable key) {
 		Jedis jedis = getJedisCommands();
 		try {
-			return Long.parseLong(jedis.get(key));
+			String vaule = (String) deserializable(jedis.get(serializable(key)));
+			return Long.parseLong(vaule == null ? "0" : vaule);
+		} catch (Exception e) {
+			log.error("", e);
+			return 0L;
 		} finally {
 			useFinishB(jedis);
 		}
 	}
 
 	@Override
-	public long incr(String key, long value) {
+	public long incr(Serializable key, long value) {
 		Jedis jedis = getJedisCommands();
 		try {
-			return jedis.incrBy(key, value);
+			return jedis.incrBy(serializable(key), value);
+		} catch (Exception e) {
+			log.error("", e);
+			return 0L;
 		} finally {
 			useFinishB(jedis);
 		}
 	}
 
 	@Override
-	public long decr(String key, long value) {
+	public long decr(Serializable key, long value) {
 		Jedis jedis = getJedisCommands();
 		try {
-			return jedis.decrBy(key, value);
+			return jedis.decrBy(serializable(key), value);
+		} catch (Exception e) {
+			log.error("", e);
+			return 0L;
 		} finally {
 			useFinishB(jedis);
 		}
 	}
 
 	@Override
-	public void delete(String key) {
-		Jedis jedis = getJedisCommands();
-		try {
-			jedis.del(key);
-		} finally {
-			useFinishB(jedis);
-		}
+	public void deleteCount(Serializable key) {
+		del(key);
 	}
 
 	@Override
 	public void useFinishJ(Jedis jedis) {
-		jedis.close();
+		// close
+		try {
+			jedis.close();
+		} catch (Exception e) {
+			log.error("", e);
+		}
+		// quit
+		try {
+			jedis.quit();
+		} catch (Exception e) {
+			log.error("", e);
+		}
+		// disconnect
+		try {
+			jedis.disconnect();
+		} catch (Exception e) {
+			log.error("", e);
+		}
+	}
+
+	@Override
+	public void shutdown() {
+		pool.close();
+		pool.destroy();
 	}
 
 }

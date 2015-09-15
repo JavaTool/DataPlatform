@@ -195,5 +195,9 @@ public interface ICache {
 	 * @return	none (key不存在)、string (字符串)、list (列表)、set (集合)、hash (哈希表)
 	 */
 	String type(Serializable key);
+	/**
+	 * 关闭
+	 */
+	void shutdown();
 
 }

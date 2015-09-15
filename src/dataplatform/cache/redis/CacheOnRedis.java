@@ -31,23 +31,39 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 	}
 
 	@Override
-	public long get(String key) {
-		return Long.parseLong(jedis.get(key));
+	public long getCount(Serializable key) {
+		try {
+			String vaule = (String) deserializable(jedis.get(serializable(key)));
+			return Long.parseLong(vaule == null ? "0" : vaule);
+		} catch (Exception e) {
+			log.error("", e);
+			return 0L;
+		}
 	}
 
 	@Override
-	public long incr(String key, long value) {
-		return jedis.incrBy(key, value);
+	public long incr(Serializable key, long value) {
+		try {
+			return jedis.incrBy(serializable(key), value);
+		} catch (Exception e) {
+			log.error("", e);
+			return 0L;
+		}
 	}
 
 	@Override
-	public long decr(String key, long value) {
-		return jedis.decrBy(key, value);
+	public long decr(Serializable key, long value) {
+		try {
+			return jedis.decrBy(serializable(key), value);
+		} catch (Exception e) {
+			log.error("", e);
+			return 0L;
+		}
 	}
 
 	@Override
-	public void delete(String key) {
-		jedis.del(key);
+	public void deleteCount(Serializable key) {
+		del(key);
 	}
 
 	@Override
@@ -114,5 +130,10 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 	@Deprecated
 	@Override
 	public void useFinishJ(Jedis jedis) {}
+
+	@Override
+	public void shutdown() {
+		jedis.close();
+	}
 
 }
