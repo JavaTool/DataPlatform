@@ -5,30 +5,29 @@ import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.BinaryJedisCommands;
-import redis.clients.jedis.JedisCommands;
+import redis.clients.jedis.Jedis;
 import dataplatform.cache.redis.CacheOnJedis;
 import dataplatform.cache.sequence.ICounter;
 import dataplatform.util.SerializaUtil;
 
-public class RedisCounter<B extends BinaryJedisCommands, J extends JedisCommands> implements ICounter {
+public class RedisCounter implements ICounter {
 	
 	protected static final Logger log = LoggerFactory.getLogger(RedisCounter.class);
 	
-	private final CacheOnJedis<B, J> cache;
+	private final CacheOnJedis cache;
 	
-	public RedisCounter(CacheOnJedis<B, J> cache) {
+	public RedisCounter(CacheOnJedis cache) {
 		this.cache = cache;
 	}
 
 	@Override
-	public long getCount(Serializable key) {
-		J jedis = cache.getJedisCommands();
+	public long getCount(String key) {
+		Jedis jedis = cache.getJedis();
 		try {
 			String vaule = (String) cache.get(key);
 			return Long.parseLong(vaule == null ? "0" : vaule);
 		} finally {
-			cache.useFinishJ(jedis);
+			cache.useFinish(jedis);
 		}
 	}
 	
@@ -39,7 +38,7 @@ public class RedisCounter<B extends BinaryJedisCommands, J extends JedisCommands
 	 * @return	序列化结果
 	 * @throws 	Exception
 	 */
-	protected static byte[] serializable(Serializable object) throws Exception {
+	protected static byte[] serializable(String object) throws Exception {
 		return SerializaUtil.serializable(object);
 	}
 	
@@ -55,33 +54,33 @@ public class RedisCounter<B extends BinaryJedisCommands, J extends JedisCommands
 	}
 
 	@Override
-	public long incr(Serializable key, long value) {
-		B jedis = cache.getBinaryJedisCommands();
+	public long incr(String key, long value) {
+		Jedis jedis = cache.getJedis();
 		try {
-			return jedis.incrBy(serializable(key), value);
+			return jedis.incrBy(key, value);
 		} catch (Exception e) {
 			log.error("", e);
 			return 0L;
 		} finally {
-			cache.useFinishB(jedis);
+			cache.useFinish(jedis);
 		}
 	}
 
 	@Override
-	public long decr(Serializable key, long value) {
-		B jedis = cache.getBinaryJedisCommands();
+	public long decr(String key, long value) {
+		Jedis jedis = cache.getJedis();
 		try {
-			return jedis.decrBy(serializable(key), value);
+			return jedis.decrBy(key, value);
 		} catch (Exception e) {
 			log.error("", e);
 			return 0L;
 		} finally {
-			cache.useFinishB(jedis);
+			cache.useFinish(jedis);
 		}
 	}
 
 	@Override
-	public void deleteCount(Serializable key) {
+	public void deleteCount(String key) {
 		cache.del(key);
 	}
 

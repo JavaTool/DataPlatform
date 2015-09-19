@@ -1,6 +1,7 @@
 package dataplatform.cache.redis;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -8,22 +9,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
-import dataplatform.cache.ICache;
+
+import com.google.common.collect.Lists;
+
 import dataplatform.cache.sequence.ICounter;
 
 /**
  * Redis缓存器
  * @author 	fuhuiyuan
  */
-public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, ICounter {
+public class CacheOnSingleJedis extends CacheOnJedis implements ICounter {
 	
-	protected static final Logger log = LoggerFactory.getLogger(CacheOnRedis.class);
+	protected static final Logger log = LoggerFactory.getLogger(CacheOnSingleJedis.class);
 	
 	protected Jedis jedis;
 	/**Redis信息*/
 	protected RedisHost host;
 	
-	public CacheOnRedis(String redisHostContent) {
+	public CacheOnSingleJedis(String redisHostContent) {
 		String[] hostInfos = redisHostContent.split(":");
 		host = new RedisHost(hostInfos[0], Integer.parseInt(hostInfos[1]));
 		jedis = new Jedis(host.getHost(), host.getPort());
@@ -31,9 +34,9 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 	}
 
 	@Override
-	public long getCount(Serializable key) {
+	public long getCount(String key) {
 		try {
-			String vaule = (String) deserializable(jedis.get(serializable(key)));
+			String vaule = jedis.get(key);
 			return Long.parseLong(vaule == null ? "0" : vaule);
 		} catch (Exception e) {
 			log.error("", e);
@@ -42,9 +45,9 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 	}
 
 	@Override
-	public long incr(Serializable key, long value) {
+	public long incr(String key, long value) {
 		try {
-			return jedis.incrBy(serializable(key), value);
+			return jedis.incrBy(key, value);
 		} catch (Exception e) {
 			log.error("", e);
 			return 0L;
@@ -52,9 +55,9 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 	}
 
 	@Override
-	public long decr(Serializable key, long value) {
+	public long decr(String key, long value) {
 		try {
-			return jedis.decrBy(serializable(key), value);
+			return jedis.decrBy(key, value);
 		} catch (Exception e) {
 			log.error("", e);
 			return 0L;
@@ -62,37 +65,34 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 	}
 
 	@Override
-	public void deleteCount(Serializable key) {
+	public void deleteCount(String key) {
 		del(key);
 	}
 
 	@Override
-	public Jedis getBinaryJedisCommands() {
-		return jedis;
-	}
-
-	@Override
 	public void mDel(Serializable... keys) {
-		try {
-			byte[][] keyBytes = serializable(keys);
-			for (byte[] key : keyBytes) {
-				getBinaryJedisCommands().del(key);
-			}
-		} catch (Exception e) {
-			log.error("", e);
-		}
+		delExecutor.exec(null, null, null, null, keys);
 	}
 
 	@Override
 	public List<Serializable> mGet(Serializable... keys) {
-		try {
-			byte[][] keyBytes = serializable(keys);
-			List<byte[]> list = getBinaryJedisCommands().mget(keyBytes);
-			return deserializable(list);
-		} catch (Exception e) {
-			log.error("", e);
-			throw new RedisException(e);
+		List<Serializable> list = Lists.newArrayListWithCapacity(keys.length);
+		getExecutor.exec(null, null, checkMCache(keys), list, keys);
+		return list;
+	}
+	
+	protected class GetExecutorEx extends GetExecutor {
+
+		@Override
+		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) {
+			return collection.addAll(jedis.mget(names));
 		}
+
+		@Override
+		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) {
+			return collection.addAll(jedis.mget(names));
+		}
+		
 	}
 
 	@Override
@@ -106,7 +106,7 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 				keysvalues[(index << 1) + 1] = serializable(map.get(key));
 				index++;
 			}
-			getBinaryJedisCommands().mset(keysvalues);
+			getJedis().mset(keysvalues);
 		} catch (Exception e) {
 			log.error("", e);
 		}
@@ -114,25 +114,22 @@ public class CacheOnRedis extends CacheOnJedis<Jedis, Jedis> implements ICache, 
 
 	@Override
 	public void clear() {
-		getBinaryJedisCommands().flushAll();
+		getJedis().flushAll();
 		log.info("clear {}.", host);
 	}
 
-	@Deprecated
 	@Override
-	public void useFinishB(Jedis jedis) {}
-
-	@Override
-	public Jedis getJedisCommands() {
+	public Jedis getJedis() {
 		return jedis;
 	}
 
 	@Deprecated
 	@Override
-	public void useFinishJ(Jedis jedis) {}
+	public void useFinish(Jedis jedis) {}
 
 	@Override
 	public void shutdown() {
+		super.shutdown();
 		jedis.close();
 	}
 

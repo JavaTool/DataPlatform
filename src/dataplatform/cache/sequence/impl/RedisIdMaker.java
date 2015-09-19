@@ -10,30 +10,30 @@ import dataplatform.cache.sequence.IInstanceIdMaker;
  */
 public class RedisIdMaker implements IInstanceIdMaker {
 	
-	private final CacheOnJedis<Jedis, Jedis> cache;
+	private final CacheOnJedis cache;
 	/**名称*/
 	private final String name;
 	
-	public RedisIdMaker(String name, CacheOnJedis<Jedis, Jedis> cache, int baseValue) throws Exception {
+	public RedisIdMaker(String name, CacheOnJedis cache, int baseValue) throws Exception {
 		this.cache = cache;
 		this.name = name;
-		Jedis jedis = cache.getJedisCommands();
+		Jedis jedis = cache.getJedis();
 		try {
 			if (!jedis.exists(name)) {
 				jedis.set(name, baseValue + "");
 			}
 		} finally {
-			cache.useFinishJ(jedis);
+			cache.useFinish(jedis);
 		}
 	}
 
 	@Override
 	public int nextInstanceId() {
-		Jedis jedis = cache.getJedisCommands();
+		Jedis jedis = cache.getJedis();
 		try {
 			return jedis.incr(name).intValue();
 		} finally {
-			cache.useFinishJ(jedis);
+			cache.useFinish(jedis);
 		}
 	}
 

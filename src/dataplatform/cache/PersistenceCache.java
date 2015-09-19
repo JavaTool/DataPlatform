@@ -34,6 +34,16 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	}
 
 	@Override
+	public void registerCache(Serializable key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+		cache.registerCache(key, valueClass, delAtShutdown, streamCoder);
+	}
+
+	@Override
+	public void expire(Serializable key, long milliseconds) {
+		cache.expire(key, milliseconds);
+	}
+
+	@Override
 	public boolean exists(Serializable key) {
 		return cache.exists(key);
 	}
@@ -152,11 +162,6 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	@Override
 	public long ttl(String key) {
 		return cache.ttl(key);
-	}
-
-	@Override
-	public void del(String key) {
-		cache.del(key);
 	}
 
 	@Override

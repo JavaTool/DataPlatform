@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import dataplatform.cache.redis.CacheOnRedis;
+import dataplatform.cache.redis.CacheOnSingleJedis;
 import dataplatform.cache.sequence.IInstanceIdMaker;
 import dataplatform.cache.sequence.IInstanceIdManager;
 
@@ -12,7 +12,7 @@ import dataplatform.cache.sequence.IInstanceIdManager;
  * Redis-id管理器
  * @author	fuhuiyuan
  */
-public class RedisIdManager extends CacheOnRedis implements IInstanceIdManager {
+public class RedisIdManager extends CacheOnSingleJedis implements IInstanceIdManager {
 	
 	/**id生成器集合*/
 	protected Map<String, IInstanceIdMaker> idMakers;

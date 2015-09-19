@@ -1,7 +1,5 @@
 package dataplatform.cache.sequence;
 
-import java.io.Serializable;
-
 /**
  * 计数器
  * @author 	fuhuiyuan
@@ -14,7 +12,7 @@ public interface ICounter {
 	 * 			计数名称
 	 * @return	当前计数
 	 */
-	long getCount(Serializable key);
+	long getCount(String key);
 	/**
 	 * 增加计数
 	 * @param 	key
@@ -23,7 +21,7 @@ public interface ICounter {
 	 * 			增量
 	 * @return	当前计数
 	 */
-	long incr(Serializable key, long value);
+	long incr(String key, long value);
 	/**
 	 * 减少计数
 	 * @param 	key
@@ -32,12 +30,12 @@ public interface ICounter {
 	 * 			减量
 	 * @return	当前计数
 	 */
-	long decr(Serializable key, long value);
+	long decr(String key, long value);
 	/**
 	 * 删除一个计数
 	 * @param 	key
 	 * 			计数名称
 	 */
-	void deleteCount(Serializable key);
+	void deleteCount(String key);
 
 }

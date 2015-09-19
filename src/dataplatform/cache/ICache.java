@@ -31,6 +31,26 @@ public interface ICache {
 	String TYPE_NULL = "none";
 	
 	/**
+	 * 注册一个缓存单位
+	 * @param 	key
+	 * 			键
+	 * @param 	valueClass
+	 * 			值类型
+	 * @param 	delAtShutdown
+	 * 			是否关闭时删除
+	 * @param 	streamCoder
+	 * 			流编码器
+	 */
+	void registerCache(Serializable key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder);
+	/**
+	 * 设置键存在时间
+	 * @param 	key
+	 * 			键
+	 * @param 	milliseconds
+	 * 			时间-毫秒
+	 */
+	void expire(Serializable key, long milliseconds);
+	/**
 	 * 判断是否存在键
 	 * @param 	key
 	 * 			键
@@ -105,12 +125,6 @@ public interface ICache {
 	 * 			键
 	 */
 	void del(Serializable key);
-	/**
-	 * 删除一个键所对应的内容
-	 * @param 	key
-	 * 			键
-	 */
-	void del(String key);
 	/**
 	 * 删除一个键所对应的哈希名称的内容
 	 * @param 	key
@@ -195,9 +209,7 @@ public interface ICache {
 	 * @return	none (key不存在)、string (字符串)、list (列表)、set (集合)、hash (哈希表)
 	 */
 	String type(Serializable key);
-	/**
-	 * 关闭
-	 */
+	
 	void shutdown();
 
 }
