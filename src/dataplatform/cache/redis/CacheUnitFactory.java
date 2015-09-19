@@ -4,11 +4,10 @@ import java.io.Serializable;
 
 import dataplatform.cache.ICacheUnit;
 import dataplatform.cache.IStreamCoder;
-import dataplatform.util.SerializaUtil;
 
 class CacheUnitFactory {
 	
-	static final IStreamCoder defaultStreamCoder = new DefaultStreamCoder();
+	static final IStreamCoder defaultStreamCoder = new SerialableCoder();
 	
 	@SuppressWarnings("rawtypes")
 	private static final Class[] STRING_CLASSES = new Class[]{
@@ -30,20 +29,6 @@ class CacheUnitFactory {
 			}
 		}
 		return defaultStreamCoder;
-	}
-	
-	private static class DefaultStreamCoder implements IStreamCoder {
-
-		@Override
-		public byte[] write(Serializable value) throws Exception {
-			return SerializaUtil.serializable(value);
-		}
-
-		@Override
-		public Serializable read(byte[] stream) throws Exception {
-			return SerializaUtil.deserializable(stream);
-		}
-		
 	}
 	
 	private static class CacheUnit implements ICacheUnit {

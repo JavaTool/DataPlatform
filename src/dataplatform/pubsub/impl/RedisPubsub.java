@@ -1,7 +1,5 @@
 package dataplatform.pubsub.impl;
 
-import java.io.Serializable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,9 +8,10 @@ import redis.clients.jedis.Jedis;
 
 import com.google.common.base.Preconditions;
 
+import dataplatform.cache.IStreamCoder;
 import dataplatform.cache.redis.CacheOnJedis;
+import dataplatform.cache.redis.SerialableCoder;
 import dataplatform.pubsub.IPubsub;
-import dataplatform.pubsub.IPubsubMessage;
 import dataplatform.pubsub.ISubscribe;
 import dataplatform.util.SerializaUtil;
 
@@ -20,9 +19,7 @@ public class RedisPubsub implements IPubsub {
 	
 	private static final Logger log = LoggerFactory.getLogger(RedisPubsub.class);
 	
-	private static final String REQUEST_MESSAGE = "RedisPubsubChannelRequest";
-	
-	private static final String SERIALIZABLE_MESSAGE = "RedisPubsubChannelSerializable";
+	private static final IStreamCoder SERIALABLE_CODER = new SerialableCoder();
 	
 	private final CacheOnJedis cache;
 	
@@ -37,21 +34,9 @@ public class RedisPubsub implements IPubsub {
 			Preconditions.checkNotNull(channel, "null channel name.");
 			Preconditions.checkNotNull(message, "null message");
 			Preconditions.checkArgument(channel.length() > 0, "zero length channel name.");
-			Preconditions.checkArgument(!channel.contains(REQUEST_MESSAGE), "illegal channel name : " + channel);
-			Preconditions.checkArgument(!channel.contains(SERIALIZABLE_MESSAGE), "illegal channel name : " + channel);
-			
-			byte[] datas;
-			if (message instanceof IPubsubMessage) {
-				datas = ((IPubsubMessage) message).toByteArray();
-				channel = channel + REQUEST_MESSAGE;
-			} else if (message instanceof Serializable) {
-				datas = SerializaUtil.serializable((Serializable) message);
-				channel = channel + SERIALIZABLE_MESSAGE;
-			} else {
-				throw new Exception("Unknow class of message : " + message);
-			}
-			
-			jedis.publish(SerializaUtil.serializable(channel), datas);
+
+			byte[] datas = SERIALABLE_CODER.write(message);
+			jedis.publish(SERIALABLE_CODER.write(channel), datas);
 		} catch (Exception e) {
 			log.error("", e);
 		} finally {
@@ -114,13 +99,8 @@ public class RedisPubsub implements IPubsub {
 		public void onMessage(byte[] channel, byte[] message) {
 			try {
 				String channelName = (String) SerializaUtil.deserializable(channel);
-				if (channelName.endsWith(REQUEST_MESSAGE)) {
-					subscribe.onMessage(channelName.replace(REQUEST_MESSAGE, ""), message);
-				} else if (channelName.endsWith(SERIALIZABLE_MESSAGE)) {
-					subscribe.onMessage(channelName.replace(REQUEST_MESSAGE, ""), SerializaUtil.deserializable(message));
-				} else {
-					throw new Exception("Unknow class of channel : " + channelName);
-				}
+				Object object = SERIALABLE_CODER.read(message);
+				subscribe.onMessage(channelName, object);
 			} catch (Exception e) {
 				log.error("", e);
 			}

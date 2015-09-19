@@ -1,11 +1,9 @@
 package dataplatform.cache;
 
-import java.io.Serializable;
-
 public interface IStreamCoder {
 	
-	byte[] write(Serializable value) throws Exception;
+	byte[] write(Object value) throws Exception;
 	
-	Serializable read(byte[] stream) throws Exception;
+	Object read(byte[] stream) throws Exception;
 
 }
