@@ -11,5 +11,6 @@
 	<classpathentry kind="lib" path="lib/hibernate3.jar"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.0.8-bin.jar"/>
 	<classpathentry kind="lib" path="lib/guava-14.0.jar" sourcepath="/guava"/>
+	<classpathentry kind="lib" path="lib/protobuf-java-2.4.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
