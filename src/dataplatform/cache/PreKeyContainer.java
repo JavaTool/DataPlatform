@@ -6,7 +6,7 @@ import java.io.Serializable;
  * 带有前缀的缓存键容器
  * @author 	fuhuiyuan
  */
-public abstract class PreKeyContainer<T extends ICache> implements ICacheKeyContainer {
+public abstract class PreKeyContainer<T extends ICache> {
 	
 	/**键前缀*/
 	protected final Serializable preKey;
