@@ -73,6 +73,22 @@ public class SerializaUtil {
 	}
 	
 	/**
+	 * 序列化
+	 * @param 	objects
+	 * 			被序列化的对象集合
+	 * @return	序列化结果
+	 * @throws 	Exception
+	 */
+	public static byte[][] serializable(String... objects) throws Exception {
+		int size = objects.length;
+		byte[][] keyBytes = new byte[size][];
+		for (int i = 0;i < size;i++) {
+			keyBytes[i] = serializable(objects[i]);
+		}
+		return keyBytes;
+	}
+	
+	/**
 	 * 反序列化
 	 * @param 	list
 	 * 			序列化内容集合
