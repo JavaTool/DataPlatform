@@ -17,22 +17,27 @@ public class RedisBlockQueue implements IPubsub {
 	
 	private static final Logger log = LoggerFactory.getLogger(RedisBlockQueue.class);
 	
-	private static final IStreamCoder SERIALABLE_CODER = new SerialableCoder();
-	
 	private final CacheOnJedis cache;
 	
 	private final ExecutorService executorService;
 	
-	public RedisBlockQueue(CacheOnJedis cache) {
+	private final IStreamCoder coder;
+	
+	public RedisBlockQueue(CacheOnJedis cache, IStreamCoder coder) {
 		this.cache = cache;
+		this.coder = coder;
 		executorService = Executors.newSingleThreadExecutor();
+	}
+	
+	public RedisBlockQueue(CacheOnJedis cache) {
+		this(cache, new SerialableCoder());
 	}
 
 	@Override
 	public void publish(String channel, Object message) {
 		Jedis jedis = cache.getJedis();
 		try {
-			jedis.lpush(SERIALABLE_CODER.write(channel), SERIALABLE_CODER.write(message));
+			jedis.lpush(coder.write(channel), coder.write(message));
 		} catch (Exception e) {
 			log.error("", e);
 		} finally {
@@ -43,20 +48,17 @@ public class RedisBlockQueue implements IPubsub {
 	@Override
 	public void subscribe(ISubscribe subscribe, String... channel) {
 		for (int i = 0;i < channel.length;i++) {
-			executorService.execute(new SubscribeThread(cache, subscribe, channel[i]));
+			executorService.execute(new SubscribeThread(subscribe, channel[i]));
 		}
 	}
 	
-	protected static class SubscribeThread implements Runnable {
-		
-		private final CacheOnJedis cache;
+	protected class SubscribeThread implements Runnable {
 		
 		private final ISubscribe subscribe;
 		
 		private final String channel;
 		
-		public SubscribeThread(CacheOnJedis cache, ISubscribe subscribe, String channel) {
-			this.cache = cache;
+		public SubscribeThread(ISubscribe subscribe, String channel) {
 			this.subscribe = subscribe;
 			this.channel = channel;
 		}
@@ -65,7 +67,8 @@ public class RedisBlockQueue implements IPubsub {
 		public void run() {
 			Jedis jedis = cache.getJedis();
 			try {
-				byte[] message = jedis.blpop(new byte[][]{SERIALABLE_CODER.write(channel)}).remove(0);
+				byte[][] keys = new byte[][]{coder.write(channel)};
+				byte[] message = jedis.blpop(subscribe.getTimeout(), keys).remove(0);
 				subscribe.onMessage(channel, message);
 			} catch (Exception e) {
 				log.error("", e);

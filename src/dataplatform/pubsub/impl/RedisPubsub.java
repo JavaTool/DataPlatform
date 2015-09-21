@@ -22,15 +22,20 @@ public class RedisPubsub implements IPubsub {
 	
 	private static final Logger log = LoggerFactory.getLogger(RedisPubsub.class);
 	
-	private static final IStreamCoder SERIALABLE_CODER = new SerialableCoder();
-	
 	private final CacheOnJedis cache;
 	
 	private final ExecutorService executorService;
 	
-	public RedisPubsub(CacheOnJedis cache) {
+	private final IStreamCoder coder;
+	
+	public RedisPubsub(CacheOnJedis cache, IStreamCoder coder) {
 		this.cache = cache;
+		this.coder = coder;
 		executorService = Executors.newSingleThreadExecutor();
+	}
+	
+	public RedisPubsub(CacheOnJedis cache) {
+		this(cache, new SerialableCoder());
 	}
 
 	@Override
@@ -41,8 +46,7 @@ public class RedisPubsub implements IPubsub {
 			Preconditions.checkNotNull(message, "null message");
 			Preconditions.checkArgument(channel.length() > 0, "zero length channel name.");
 
-			byte[] datas = SERIALABLE_CODER.write(message);
-			jedis.publish(SERIALABLE_CODER.write(channel), datas);
+			jedis.publish(SerializaUtil.serializable(channel), coder.write(message));
 		} catch (Exception e) {
 			log.error("", e);
 		} finally {
@@ -58,54 +62,41 @@ public class RedisPubsub implements IPubsub {
 				channels[i] = SerializaUtil.serializable(channel[i]);
 			}
 			
-			executorService.execute(new SubscribeThread(subscribe, channels, cache));
+			executorService.execute(new SubscribeThread(subscribe, channels));
 			log.info("subscribe : " + subscribe);
 		} catch (Exception e) {
 			log.error("", e);
 		}
 	}
 	
-	protected static class SubscribeThread implements Runnable {
+	protected class SubscribeThread extends BinaryJedisPubSub implements Runnable {
 		
 		private final ISubscribe subscribe;
 		
 		private final byte[][] channels;
 		
-		private final CacheOnJedis cache;
-		
-		public SubscribeThread(ISubscribe subscribe, byte[][] channels, CacheOnJedis cache) {
+		public SubscribeThread(ISubscribe subscribe, byte[][] channels) {
 			this.subscribe = subscribe;
 			this.channels = channels;
-			this.cache = cache;
 		}
 
 		@Override
 		public void run() {
 			Jedis jedis = cache.getJedis();
 			try {
-				jedis.subscribe(new Subscribe(subscribe), channels);
+				jedis.subscribe(this, channels);
 			} catch (Exception e) {
 				log.error("", e);
 			} finally {
 				cache.useFinish(jedis);
 			}
 		}
-		
-	}
-	
-	protected static class Subscribe extends BinaryJedisPubSub {
-		
-		private final ISubscribe subscribe;
-		
-		public Subscribe(ISubscribe subscribe) {
-			this.subscribe = subscribe;
-		}
 
 		@Override
 		public void onMessage(byte[] channel, byte[] message) {
 			try {
 				String channelName = (String) SerializaUtil.deserializable(channel);
-				Object object = SERIALABLE_CODER.read(message);
+				Object object = coder.read(message);
 				subscribe.onMessage(channelName, object);
 			} catch (Exception e) {
 				log.error("", e);
