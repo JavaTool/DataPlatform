@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -11,6 +12,7 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import com.google.common.collect.Lists;
 
+import dataplatform.cache.ICacheUnit;
 import dataplatform.cache.IStreamCoder;
 import dataplatform.cache.sequence.ICounter;
 
@@ -29,44 +31,43 @@ public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
 	}
 
 	@Override
-	public void mSet(Map<Serializable, Object> map) {
+	public void mSet(Map<String, Object> map) {
+		Jedis jedis = getJedis();
 		int mapSize = map.size();
-		Serializable[] array = new Serializable[mapSize << 1];
-		int index = 0;
-		for (Serializable key : map.keySet()) {
-			array[index << 1] = key;
-			array[(index << 1) + 1] = (Serializable) map.get(key); // TODO Object
-			index++;
+		Set<String> keySet = map.keySet();
+		String[] keys = keySet.toArray(new String[mapSize]);
+		ICacheUnit cacheUnit = checkMCache(keys);
+		try {
+			if (cacheUnit == null) {
+				String[] array = new String[mapSize << 1];
+				for (int i = 0;i < keys.length;i++) {
+					array[i << 1] = keys[i];
+					array[(i << 1) + 1] = map.get(keys[i]).toString();
+				}
+				jedis.mset(array);
+			} else {
+				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				byte[][] array = new byte[mapSize << 1][];
+				for (int i = 0;i < keys.length;i++) {
+					array[i << 1] = serializable(keys[i]);
+					array[(i << 1) + 1] = streamCoder.write(map.get(keys[i]));
+				}
+				jedis.mset(array);
+			}
+		} catch (Exception e) {
+			log.error("", e);
+		} finally {
+			useFinish(jedis);
 		}
-		setExecutor.exec(null, null, checkMCache(array), null, array);
 	}
 
 	@Override
-	protected ICacheExecutor createSetExecutor() {
-		return new SetExecutorEx();
-	}
-	
-	protected class SetExecutorEx extends SetExecutor {
-
-		@Override
-		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) {
-			return jedis.mset(names);
-		}
-
-		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) {
-			return jedis.mset(names);
-		}
-		
-	}
-
-	@Override
-	public void mDel(Serializable... keys) {
+	public void mDel(String... keys) {
 		delExecutor.exec(null, null, checkMCache(keys), null, keys);
 	}
 
 	@Override
-	public List<Object> mGet(Serializable... keys) {
+	public List<Object> mGet(String... keys) {
 		List<Object> list = Lists.newArrayListWithCapacity(keys.length);
 		getExecutor.exec(null, null, checkMCache(keys), list, keys);
 		return list;
@@ -82,7 +83,7 @@ public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
 		@Override
 		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
 			for (byte[] datas : jedis.mget(names)) {
-				collection.add((Serializable) streamCoder.read(datas));
+				collection.add(streamCoder.read(datas));
 			}
 			return null;
 		}

@@ -1,6 +1,5 @@
 package dataplatform.cache;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,92 +33,92 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	}
 
 	@Override
-	public void registerCache(Serializable key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+	public void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
 		cache.registerCache(key, valueClass, delAtShutdown, streamCoder);
 	}
 
 	@Override
-	public void expire(Serializable key, long milliseconds) {
+	public void expire(String key, long milliseconds) {
 		cache.expire(key, milliseconds);
 	}
 
 	@Override
-	public boolean exists(Serializable key) {
+	public boolean exists(String key) {
 		return cache.exists(key);
 	}
 
 	@Override
-	public boolean hexists(Serializable key, Serializable name) {
+	public boolean hexists(String key, String name) {
 		return cache.hexists(key, name);
 	}
 	
 	@Override
-	public void set(Serializable key, Object object) {
+	public void set(String key, Object object) {
 		cache.set(key, object);
 	}
 
 	@Override
-	public void hset(Serializable key, Serializable name, Object object) {
+	public void hset(String key, String name, Object object) {
 		cache.hset(key, name, object);
 	}
 
 	@Override
-	public void mSet(Map<Serializable, Object> map) {
+	public void mSet(Map<String, Object> map) {
 		cache.mSet(map);
 	}
 
 	@Override
-	public void hmSet(Serializable key, Map<Serializable, Object> map) {
+	public void hmSet(String key, Map<String, Object> map) {
 		cache.hmSet(key, map);
 	}
 
 	@Override
-	public void del(Serializable key) {
+	public void del(String key) {
 		cache.del(key);
 	}
 
 	@Override
-	public void hdel(Serializable key, Serializable name) {
+	public void hdel(String key, String name) {
 		cache.hdel(key, name);
 	}
 
 	@Override
-	public void mDel(Serializable... keys) {
+	public void mDel(String... keys) {
 		cache.mDel(keys);
 	}
 
 	@Override
-	public void hmDel(Serializable key, Serializable... names) {
+	public void hmDel(String key, String... names) {
 		cache.hmDel(key, names);
 	}
 
 	@Override
-	public Object get(Serializable key) {
+	public Object get(String key) {
 		return cache.get(key);
 	}
 
 	@Override
-	public Object hget(Serializable key, Serializable name) {
+	public Object hget(String key, String name) {
 		return cache.hget(key, name);
 	}
 
 	@Override
-	public List<Object> mGet(Serializable... keys) {
+	public List<Object> mGet(String... keys) {
 		return cache.mGet(keys);
 	}
 
 	@Override
-	public List<Object> hmGet(Serializable key, Serializable... names) {
+	public List<Object> hmGet(String key, String... names) {
 		return cache.hmGet(key, names);
 	}
 
 	@Override
-	public Map<Serializable, Object> hGetAll(Serializable key) {
+	public Map<String, Object> hGetAll(String key) {
 		return cache.hGetAll(key);
 	}
 
 	@Override
-	public Set<Object> hKeys(Serializable key) {
+	public Set<Object> hKeys(String key) {
 		return cache.hKeys(key);
 	}
 
@@ -129,7 +128,7 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	}
 
 	@Override
-	public long hlen(Serializable key) {
+	public long hlen(String key) {
 		return cache.hlen(key);
 	}
 	
@@ -165,7 +164,7 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	}
 
 	@Override
-	public String type(Serializable key) {
+	public String type(String key) {
 		return cache.type(key);
 	}
 

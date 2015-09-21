@@ -71,12 +71,12 @@ public class CacheOnSingleJedis extends CacheOnJedis implements ICounter {
 	}
 
 	@Override
-	public void mDel(Serializable... keys) {
+	public void mDel(String... keys) {
 		delExecutor.exec(null, null, null, null, keys);
 	}
 
 	@Override
-	public List<Object> mGet(Serializable... keys) {
+	public List<Object> mGet(String... keys) {
 		List<Object> list = Lists.newArrayListWithCapacity(keys.length);
 		getExecutor.exec(null, null, checkMCache(keys), list, keys);
 		return list;
@@ -100,7 +100,7 @@ public class CacheOnSingleJedis extends CacheOnJedis implements ICounter {
 	}
 
 	@Override
-	public void mSet(Map<Serializable, Object> map) {
+	public void mSet(Map<String, Object> map) {
 		try {
 			int mapSize = map.size();
 			byte[][] keysvalues = new byte[mapSize << 1][];

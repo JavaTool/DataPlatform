@@ -1,7 +1,5 @@
 package dataplatform.cache.redis;
 
-import java.io.Serializable;
-
 import dataplatform.cache.ICacheUnit;
 import dataplatform.cache.IStreamCoder;
 
@@ -16,7 +14,7 @@ class CacheUnitFactory {
 	
 	private CacheUnitFactory() {}
 	
-	public static ICacheUnit createCacheUnit(Serializable key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+	public static ICacheUnit createCacheUnit(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
 		streamCoder = streamCoder == null ? createStreamCoder(valueClass) : streamCoder;
 		return new CacheUnit(key, valueClass, delAtShutdown, streamCoder);
 	}
@@ -33,7 +31,7 @@ class CacheUnitFactory {
 	
 	private static class CacheUnit implements ICacheUnit {
 		
-		private Serializable key;
+		private String key;
 		
 		@SuppressWarnings("rawtypes")
 		private Class valueClass;
@@ -42,7 +40,7 @@ class CacheUnitFactory {
 		
 		private IStreamCoder streamCoder;
 		
-		public CacheUnit(Serializable key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+		public CacheUnit(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
 			this.key = key;
 			this.valueClass = valueClass;
 			this.delAtShutdown = delAtShutdown;
@@ -50,7 +48,7 @@ class CacheUnitFactory {
 		}
 
 		@Override
-		public Serializable getKey() {
+		public String getKey() {
 			return key;
 		}
 

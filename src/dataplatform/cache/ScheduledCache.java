@@ -1,6 +1,5 @@
 package dataplatform.cache;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -21,28 +20,28 @@ import dataplatform.persist.IEntityManager;
 public class ScheduledCache extends PersistenceCache {
 	
 	/**创建-计划任务的键队列*/
-	private final Queue<Serializable> createKeys;
+	private final Queue<String> createKeys;
 	/**更新-计划任务的键队列*/
-	private final Queue<Serializable> updateKeys;
+	private final Queue<String> updateKeys;
 	/**删除-计划任务的键队列*/
-	private final Queue<Serializable> deleteKeys;
+	private final Queue<String> deleteKeys;
 	/**创建-计划任务的名称队列集合*/
-	private final Multimap<Serializable, Serializable> createHmap;
+	private final Multimap<String, String> createHmap;
 	/**更新-计划任务的名称队列集合*/
-	private final Multimap<Serializable, Serializable> updateHmap;
+	private final Multimap<String, String> updateHmap;
 	/**删除-计划任务的名称队列集合*/
-	private final Multimap<Serializable, Serializable> deleteHmap;
+	private final Multimap<String, String> deleteHmap;
 	/**键的持久化后是否删除缓存的标志集合*/
-	private final Map<Serializable, Boolean> keyCaches;
+	private final Map<String, Boolean> keyCaches;
 	/**名称的持久化后是否删除缓存的标志集合*/
-	private final Map<Serializable, Boolean> nameCaches;
+	private final Map<String, Boolean> nameCaches;
 	
 	public ScheduledCache(ICache cache, IEntityManager entityManager, long delay) {
 		super(cache, entityManager, delay);
 		
-		createKeys = new ConcurrentLinkedQueue<Serializable>();
-		updateKeys = new ConcurrentLinkedQueue<Serializable>();
-		deleteKeys = new ConcurrentLinkedQueue<Serializable>();
+		createKeys = new ConcurrentLinkedQueue<String>();
+		updateKeys = new ConcurrentLinkedQueue<String>();
+		deleteKeys = new ConcurrentLinkedQueue<String>();
 		createHmap = LinkedListMultimap.create();
 		updateHmap = LinkedListMultimap.create();
 		deleteHmap = LinkedListMultimap.create();
@@ -53,12 +52,12 @@ public class ScheduledCache extends PersistenceCache {
 	@Override
 	protected void createSync() {
 		while (createKeys.size() > 0) {
-			Serializable key = createKeys.poll();
+			String key = createKeys.poll();
 			if (createHmap.containsKey(key)) { // HSet
-				Collection<Serializable> queue = createHmap.get(key);
-				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
+				Collection<String> queue = createHmap.get(key);
+				String[] names = queue.toArray(new String[queue.size()]);
 				List<Object> list = hmGet(key, names);
-				entityManager.createSync(list.toArray(new Serializable[list.size()]));
+				entityManager.createSync(list.toArray(new String[list.size()]));
 				tryDeleteCache(key, queue);
 			} else { // Set
 				entityManager.createSync(get(key));
@@ -74,16 +73,16 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	queue
 	 * 			名称队列
 	 */
-	protected void tryDeleteCache(Serializable key, Collection<Serializable> queue) {
-		Collection<Serializable> waitRemoves = Lists.newLinkedList();
-		for (Serializable name : queue) {
+	protected void tryDeleteCache(String key, Collection<String> queue) {
+		Collection<String> waitRemoves = Lists.newLinkedList();
+		for (String name : queue) {
 			if (nameCaches.containsKey(name) && !nameCaches.get(name)) {
 				waitRemoves.add(name);
 			}
 		}
 		waitRemoves.removeAll(waitRemoves);
-		Serializable[] names = queue.toArray(new Serializable[queue.size()]);
-		hdel(key, names);
+		String[] names = queue.toArray(new String[queue.size()]);
+		hmDel(key, names);
 	}
 	
 	/**
@@ -91,7 +90,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	key
 	 * 			键
 	 */
-	protected void tryDeleteCache(Serializable key) {
+	protected void tryDeleteCache(String key) {
 		if (keyCaches.containsKey(key) && !keyCaches.get(key)) {
 			del(key);
 		}
@@ -100,12 +99,12 @@ public class ScheduledCache extends PersistenceCache {
 	@Override
 	protected void updateSync() {
 		while (updateKeys.size() > 0) {
-			Serializable key = updateKeys.poll();
+			String key = updateKeys.poll();
 			if (updateHmap.containsKey(key)) {
-				Collection<Serializable> queue = updateHmap.get(key);
-				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
+				Collection<String> queue = updateHmap.get(key);
+				String[] names = queue.toArray(new String[queue.size()]);
 				List<Object> list = hmGet(key, names);
-				entityManager.updateSync(list.toArray(new Serializable[list.size()]));
+				entityManager.updateSync(list.toArray(new String[list.size()]));
 				tryDeleteCache(key, queue);
 			} else {
 				entityManager.updateSync(get(key));
@@ -117,12 +116,12 @@ public class ScheduledCache extends PersistenceCache {
 	@Override
 	protected void deleteSync() {
 		while (deleteKeys.size() > 0) {
-			Serializable key = deleteKeys.poll();
+			String key = deleteKeys.poll();
 			if (deleteHmap.containsKey(key)) {
-				Collection<Serializable> queue = deleteHmap.get(key);
-				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
+				Collection<String> queue = deleteHmap.get(key);
+				String[] names = queue.toArray(new String[queue.size()]);
 				List<Object> list = hmGet(key, names);
-				entityManager.updateSync(list.toArray(new Serializable[list.size()]));
+				entityManager.updateSync(list.toArray(new String[list.size()]));
 				hmDel(key, names);
 			} else {
 				entityManager.updateSync(get(key));
@@ -132,7 +131,7 @@ public class ScheduledCache extends PersistenceCache {
 	}
 
 	@Override
-	public synchronized void addScheduledCreate(Serializable key, Serializable value, boolean deleteCache) {
+	public synchronized void addScheduledCreate(String key, Object value, boolean deleteCache) {
 		if (deleteKeys.contains(key)) {
 			deleteKeys.remove(key);
 			queueAdd(updateKeys, key);
@@ -145,7 +144,7 @@ public class ScheduledCache extends PersistenceCache {
 	}
 
 	@Override
-	public synchronized void addScheduledUpdate(Serializable key, Serializable value, boolean deleteCache) {
+	public synchronized void addScheduledUpdate(String key, Object value, boolean deleteCache) {
 		if (createKeys.contains(key)) {
 			saveDeleteKeyCache(key, deleteCache);
 		} else if (!deleteKeys.contains(key)) {
@@ -156,7 +155,7 @@ public class ScheduledCache extends PersistenceCache {
 	}
 
 	@Override
-	public synchronized void addScheduledDelete(Serializable key, Serializable value) {
+	public synchronized void addScheduledDelete(String key, Object value) {
 		createKeys.remove(key);
 		updateKeys.remove(key);
 		queueAdd(deleteKeys, key);
@@ -164,7 +163,7 @@ public class ScheduledCache extends PersistenceCache {
 	}
 
 	@Override
-	public synchronized void addHScheduledCreate(Serializable key, Serializable name, Serializable value, boolean deleteCache) {
+	public synchronized void addHScheduledCreate(String key, String name, Object value, boolean deleteCache) {
 		if (deleteHmap.containsValue(name)) {
 			addHScheduled(key, name, updateKeys, updateHmap);
 		} else {
@@ -176,7 +175,7 @@ public class ScheduledCache extends PersistenceCache {
 	}
 
 	@Override
-	public synchronized void addHScheduledUpdate(Serializable key, Serializable name, Serializable value, boolean deleteCache) {
+	public synchronized void addHScheduledUpdate(String key, String name, Object value, boolean deleteCache) {
 		if (!createHmap.containsValue(name) && !deleteHmap.containsValue(name)) {
 			addHScheduled(key, name, updateKeys, updateHmap);
 			saveDeleteNameCache(key, deleteCache);
@@ -185,7 +184,7 @@ public class ScheduledCache extends PersistenceCache {
 	}
 
 	@Override
-	public synchronized void addHScheduledDelete(Serializable key, Serializable name, Serializable value) {
+	public synchronized void addHScheduledDelete(String key, String name, Object value) {
 		createHmap.remove(key, name);
 		updateHmap.remove(key, name);
 		addHScheduled(key, name, deleteKeys, deleteHmap);
@@ -199,7 +198,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	key
 	 * 			键
 	 */
-	protected void queueAdd(Collection<Serializable> queue, Serializable key) {
+	protected void queueAdd(Collection<String> queue, String key) {
 		if (!queue.contains(key)) {
 			queue.add(key);
 		}
@@ -216,7 +215,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	hmap
 	 * 			名称队列集合
 	 */
-	protected void addHScheduled(Serializable key, Serializable name, Queue<Serializable> keys, Multimap<Serializable, Serializable> hmap) {
+	protected void addHScheduled(String key, String name, Queue<String> keys, Multimap<String, String> hmap) {
 		queueAdd(keys, key);
 		hmap.put(key, name);
 	}
@@ -230,7 +229,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	caches
 	 * 			哈希缓存
 	 */
-	protected void saveDeleteCache(Serializable key, boolean deleteCache, Map<Serializable, Boolean> caches) {
+	protected void saveDeleteCache(String key, boolean deleteCache, Map<String, Boolean> caches) {
 		if (caches.containsKey(key) && !caches.get(key)) {
 			deleteCache = false; // 之前的任务需要保留缓存对象，则这次任务也标记为保留
 		}
@@ -244,7 +243,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	deleteCache
 	 * 			是否删除缓存
 	 */
-	protected void saveDeleteKeyCache(Serializable key, boolean deleteCache) {
+	protected void saveDeleteKeyCache(String key, boolean deleteCache) {
 		saveDeleteCache(key, deleteCache, keyCaches);
 	}
 	
@@ -255,7 +254,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	deleteCache
 	 * 			是否删除缓存
 	 */
-	protected void saveDeleteNameCache(Serializable key, boolean deleteCache) {
+	protected void saveDeleteNameCache(String key, boolean deleteCache) {
 		saveDeleteCache(key, deleteCache, nameCaches);
 	}
 
@@ -266,7 +265,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	value
 	 * 			值
 	 */
-	protected void scheduledSet(Serializable key, Serializable value) {
+	protected void scheduledSet(String key, Object value) {
 		if (value != null) {
 			set(key, value);
 		}
@@ -281,7 +280,7 @@ public class ScheduledCache extends PersistenceCache {
 	 * @param 	value
 	 * 			值
 	 */
-	protected void scheduledHSet(Serializable key, Serializable name, Serializable value) {
+	protected void scheduledHSet(String key, String name, Object value) {
 		if (value != null) {
 			hset(key, name, value);
 		}

@@ -1,7 +1,5 @@
 package dataplatform.cache;
 
-import java.io.Serializable;
-
 /**
  * 带前缀键的缓存器
  * @author 	fuhuiyuan
@@ -9,13 +7,13 @@ import java.io.Serializable;
 public abstract class PreKeyCache extends PreKeyContainer<IScheduledCache> {
 	
 	/**创建-键*/
-	protected final Serializable createKey;
+	protected final String createKey;
 	/**更新-键*/
-	protected final Serializable updateKey;
+	protected final String updateKey;
 	/**删除-键*/
-	protected final Serializable deleteKey;
+	protected final String deleteKey;
 
-	public PreKeyCache(Serializable preKey, IScheduledCache cache, Serializable createKey, Serializable updateKey, Serializable deleteKey) {
+	public PreKeyCache(String preKey, IScheduledCache cache, String createKey, String updateKey, String deleteKey) {
 		super(preKey, cache);
 		this.createKey = preKey + "_" + createKey;
 		this.updateKey = preKey + "_" + updateKey;
@@ -29,7 +27,7 @@ public abstract class PreKeyCache extends PreKeyContainer<IScheduledCache> {
 	 * @param 	value
 	 * 			值
 	 */
-	protected void create(Serializable name, Serializable value) {
+	protected void create(String name, Object value) {
 		cache.addHScheduledUpdate(createKey, name, value, true);
 	}
 	
@@ -40,7 +38,7 @@ public abstract class PreKeyCache extends PreKeyContainer<IScheduledCache> {
 	 * @param 	value
 	 * 			值
 	 */
-	protected void update(Serializable name, Serializable value) {
+	protected void update(String name, Object value) {
 		cache.addHScheduledUpdate(updateKey, name, value, true);
 	}
 	
@@ -51,7 +49,7 @@ public abstract class PreKeyCache extends PreKeyContainer<IScheduledCache> {
 	 * @param 	value
 	 * 			值
 	 */
-	protected void delete(Serializable name, Serializable value) {
+	protected void delete(String name, Object value) {
 		cache.addHScheduledDelete(deleteKey, name, value);
 	}
 

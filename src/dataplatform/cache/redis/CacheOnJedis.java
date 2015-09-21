@@ -72,7 +72,7 @@ public abstract class CacheOnJedis implements ICache {
 	}
 	
 	@Override
-	public void expire(Serializable key, long milliseconds) {
+	public void expire(String key, long milliseconds) {
 		ICacheUnit cacheUnit = cacheUnits.get(key);
 		Jedis jedis = getJedis();
 		try {
@@ -90,7 +90,7 @@ public abstract class CacheOnJedis implements ICache {
 	}
 	
 	@Override
-	public boolean exists(Serializable key) {
+	public boolean exists(String key) {
 		return (boolean) existsExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
@@ -119,19 +119,19 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public boolean hexists(Serializable key, Serializable name) {
+	public boolean hexists(String key, String name) {
 		return (boolean) existsExecutor.exec(key, null, cacheUnits.get(key), null, name);
 	}
 
 	@Override
-	public void set(Serializable key, Object object) {
+	public void set(String key, Object object) {
 		setExecutor.exec(key, null, object, cacheUnits.get(key));
 	}
 	
 	protected abstract class CacheExecutor implements ICacheExecutor {
 
 		@Override
-		public Object exec(Serializable key, Serializable name, Object object, ICacheUnit cacheUnit) {
+		public Object exec(String key, String name, Object object, ICacheUnit cacheUnit) {
 			Jedis jedis = getJedis();
 			try {
 				IStreamCoder streamCoder;
@@ -158,7 +158,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 		
 		@Override
-		public Object exec(Serializable key, Map<Serializable, Object> map, ICacheUnit cacheUnit, Collection<Object> collection, Serializable... names) {
+		public Object exec(String key, Map<String, Object> map, ICacheUnit cacheUnit, Collection<Object> collection, String... names) {
 			Jedis jedis = getJedis();
 			try {
 				IStreamCoder streamCoder = cacheUnit == null ? CacheUnitFactory.defaultStreamCoder : cacheUnit.getStreamCoder();
@@ -199,7 +199,7 @@ public abstract class CacheOnJedis implements ICache {
 					} finally {
 						if (map != null && map.size() == 0) {
 							for (byte[] k : byteMap.keySet()) {
-								map.put(deserializable(k), deserializable(byteMap.get(k)));
+								map.put(deserializable(k).toString(), deserializable(byteMap.get(k)));
 							}
 						}
 					}
@@ -253,7 +253,7 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public void hset(Serializable key, Serializable name, Object object) {
+	public void hset(String key, String name, Object object) {
 		hsetExecutor.exec(key, name, object, cacheUnits.get(key));
 	}
 	
@@ -282,12 +282,12 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public void hmSet(Serializable key, Map<Serializable, Object> map) {
+	public void hmSet(String key, Map<String, Object> map) {
 		hsetExecutor.exec(key, map, cacheUnits.get(key), null);
 	}
 
 	@Override
-	public void del(Serializable key) {
+	public void del(String key) {
 		delExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
@@ -326,7 +326,7 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public Object get(Serializable key) {
+	public Object get(String key) {
 		return getExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
@@ -361,7 +361,7 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public Object hget(Serializable key, Serializable name) {
+	public Object hget(String key, String name) {
 		return hgetExecutor.exec(key, name, null, cacheUnits.get(key));
 	}
 	
@@ -394,14 +394,14 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public List<Object> hmGet(Serializable key, Serializable... names) {
+	public List<Object> hmGet(String key, String... names) {
 		List<Object> list = Lists.newArrayListWithCapacity(names.length);
 		hgetExecutor.exec(key, null, cacheUnits.get(key), list, names);
 		return list;
 	}
 
 	@Override
-	public void hdel(Serializable key, Serializable name) {
+	public void hdel(String key, String name) {
 		hdelExecutor.exec(key, name, null, cacheUnits.get(key));
 	}
 	
@@ -430,12 +430,12 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public void hmDel(Serializable key, Serializable... names) {
+	public void hmDel(String key, String... names) {
 		hdelExecutor.exec(key, null, cacheUnits.get(key), Lists.newArrayListWithCapacity(names.length), names);
 	}
 
 	@Override
-	public long hlen(Serializable key) {
+	public long hlen(String key) {
 		return (long) hlenAndHgetExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
@@ -466,14 +466,14 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public Map<Serializable, Object> hGetAll(Serializable key) {
-		Map<Serializable, Object> map = Maps.newHashMap();
+	public Map<String, Object> hGetAll(String key) {
+		Map<String, Object> map = Maps.newHashMap();
 		hlenAndHgetExecutor.exec(key, map, cacheUnits.get(key), null);
 		return map;
 	}
 
 	@Override
-	public Set<Object> hKeys(Serializable key) {
+	public Set<Object> hKeys(String key) {
 		Set<Object> keys = Sets.newHashSet();
 		hkeysAndTtlExecutor.exec(key, null, cacheUnits.get(keys), keys);
 		return keys;
@@ -525,7 +525,7 @@ public abstract class CacheOnJedis implements ICache {
 	}
 	
 	@Override
-	public String type(Serializable key) {
+	public String type(String key) {
 		return (String) typeExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
@@ -578,7 +578,7 @@ public abstract class CacheOnJedis implements ICache {
 	}
 	
 	@Override
-	public void registerCache(Serializable key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+	public void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
 		Preconditions.checkArgument(!cacheUnits.containsKey(key), "Repeat cache key[{}].", key);
 		cacheUnits.put(key, CacheUnitFactory.createCacheUnit(key, valueClass, delAtShutdown, streamCoder));
 	}
@@ -592,9 +592,9 @@ public abstract class CacheOnJedis implements ICache {
 		}
 	}
 	
-	protected ICacheUnit checkMCache(Serializable... keys) {
+	protected ICacheUnit checkMCache(String... keys) {
 		ICacheUnit cacheUnit = null;
-		for (Serializable key : keys) {
+		for (String key : keys) {
 			if (!(cacheUnit == null && !cacheUnits.containsKey(key))) {
 				Preconditions.checkArgument(cacheUnit != null && cacheUnits.containsKey(key), "Not only cache unit.");
 			}

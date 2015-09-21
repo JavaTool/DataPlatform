@@ -1,7 +1,5 @@
 package dataplatform.cache;
 
-import java.io.Serializable;
-
 /**
  * 拥有持久化计划任务的缓存器
  * <p>
@@ -24,7 +22,7 @@ public interface IScheduledCache extends ICache {
 	 * @param 	deleteCache
 	 * 			是否在持久化后删除缓存对象
 	 */
-	void addScheduledCreate(Serializable key, Serializable value, boolean deleteCache);
+	void addScheduledCreate(String key, Object value, boolean deleteCache);
 	/**
 	 * 更新计划任务
 	 * @param 	key
@@ -34,7 +32,7 @@ public interface IScheduledCache extends ICache {
 	 * @param 	deleteCache
 	 * 			是否在持久化后删除缓存对象
 	 */
-	void addScheduledUpdate(Serializable key, Serializable value, boolean deleteCache);
+	void addScheduledUpdate(String key, Object value, boolean deleteCache);
 	/**
 	 * 删除计划任务
 	 * @param 	key
@@ -42,7 +40,7 @@ public interface IScheduledCache extends ICache {
 	 * @param 	value
 	 * 			缓存对象，为空时表示已经缓存过
 	 */
-	void addScheduledDelete(Serializable key, Serializable value);
+	void addScheduledDelete(String key, Object value);
 	/**
 	 * 插入计划任务
 	 * @param 	key
@@ -54,7 +52,7 @@ public interface IScheduledCache extends ICache {
 	 * @param 	deleteCache
 	 * 			是否在持久化后删除缓存对象
 	 */
-	void addHScheduledCreate(Serializable key, Serializable name, Serializable value, boolean deleteCache);
+	void addHScheduledCreate(String key, String name, Object value, boolean deleteCache);
 	/**
 	 * 更新计划任务
 	 * @param 	key
@@ -66,7 +64,7 @@ public interface IScheduledCache extends ICache {
 	 * @param 	deleteCache
 	 * 			是否在持久化后删除缓存对象
 	 */
-	void addHScheduledUpdate(Serializable key, Serializable name, Serializable value, boolean deleteCache);
+	void addHScheduledUpdate(String key, String name, Object value, boolean deleteCache);
 	/**
 	 * 删除计划任务
 	 * @param 	key
@@ -76,7 +74,7 @@ public interface IScheduledCache extends ICache {
 	 * @param 	value
 	 * 			缓存对象，为空时表示已经缓存过
 	 */
-	void addHScheduledDelete(Serializable key, Serializable name, Serializable value);
+	void addHScheduledDelete(String key, String name, Object value);
 	/**
 	 * 执行并清除所有任务和相关缓存
 	 */

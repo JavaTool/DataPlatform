@@ -1,10 +1,8 @@
 package dataplatform.cache;
 
-import java.io.Serializable;
-
 public interface ICacheUnit {
 	
-	Serializable getKey();
+	String getKey();
 	
 	@SuppressWarnings("rawtypes")
 	Class getValueClass();
