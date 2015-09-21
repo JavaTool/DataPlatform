@@ -1,5 +1,8 @@
 package dataplatform.pubsub.impl;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +26,11 @@ public class RedisPubsub implements IPubsub {
 	
 	private final CacheOnJedis cache;
 	
+	private final ExecutorService executorService;
+	
 	public RedisPubsub(CacheOnJedis cache) {
 		this.cache = cache;
+		executorService = Executors.newSingleThreadExecutor();
 	}
 
 	@Override
@@ -52,7 +58,7 @@ public class RedisPubsub implements IPubsub {
 				channels[i] = SerializaUtil.serializable(channel[i]);
 			}
 			
-			new Thread(new SubscribeThread(subscribe, channels, cache), "RedisPubsub : " + subscribe).start();
+			executorService.execute(new SubscribeThread(subscribe, channels, cache));
 			log.info("subscribe : " + subscribe);
 		} catch (Exception e) {
 			log.error("", e);
