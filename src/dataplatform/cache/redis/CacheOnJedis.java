@@ -91,28 +91,28 @@ public abstract class CacheOnJedis implements ICache {
 	
 	@Override
 	public boolean exists(Serializable key) {
-		return (Boolean) existsExecutor.exec(key, null, null, cacheUnits.get(key));
+		return (boolean) existsExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
 	protected class ExistsExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) throws Exception {
+		protected Object execReids(Jedis jedis, String key, String name, String object) throws Exception {
 			return jedis.exists(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
 			return jedis.exists(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) throws Exception {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception {
 			return jedis.hexists(key, names[0]);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
 			return jedis.hexists(key, names[0]);
 		}
 		
@@ -120,18 +120,18 @@ public abstract class CacheOnJedis implements ICache {
 
 	@Override
 	public boolean hexists(Serializable key, Serializable name) {
-		return (Boolean) existsExecutor.exec(key, null, cacheUnits.get(key), null, name);
+		return (boolean) existsExecutor.exec(key, null, cacheUnits.get(key), null, name);
 	}
 
 	@Override
-	public void set(Serializable key, Serializable object) {
+	public void set(Serializable key, Object object) {
 		setExecutor.exec(key, null, object, cacheUnits.get(key));
 	}
 	
 	protected abstract class CacheExecutor implements ICacheExecutor {
 
 		@Override
-		public Serializable exec(Serializable key, Serializable name, Serializable object, ICacheUnit cacheUnit) {
+		public Object exec(Serializable key, Serializable name, Object object, ICacheUnit cacheUnit) {
 			Jedis jedis = getJedis();
 			try {
 				IStreamCoder streamCoder;
@@ -147,7 +147,7 @@ public abstract class CacheOnJedis implements ICache {
 				if (streamCoder == null) {
 					return execReids(jedis, key.toString(), name == null ? null : name.toString(), object == null ? null : object.toString());
 				} else {
-					return execReids(jedis, serializable(key), name == null ? null : serializable(name), object == null ? null : streamCoder.write(object));
+					return execReids(jedis, serializable(key), name == null ? null : serializable(name), object == null ? null : streamCoder.write(object), streamCoder);
 				}
 			} catch (Exception e) {
 				log.error("error on key " + key, e);
@@ -158,7 +158,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 		
 		@Override
-		public Serializable exec(Serializable key, Map<Serializable, Serializable> map, ICacheUnit cacheUnit, Collection<Serializable> collection, Serializable... names) {
+		public Object exec(Serializable key, Map<Serializable, Object> map, ICacheUnit cacheUnit, Collection<Object> collection, Serializable... names) {
 			Jedis jedis = getJedis();
 			try {
 				IStreamCoder streamCoder = cacheUnit == null ? CacheUnitFactory.defaultStreamCoder : cacheUnit.getStreamCoder();
@@ -189,13 +189,13 @@ public abstract class CacheOnJedis implements ICache {
 					try {
 						if (map != null) {
 							for (Serializable k : map.keySet()) {
-								byteMap.put(serializable(k), serializable(map.get(k)));
+								byteMap.put(serializable(k), serializable((Serializable) map.get(k)));
 							}
 						}
 						for (int i = 0;i < names.length;i++) {
 							byteNames[i] = serializable(names[i]);
 						}
-						return execReids(jedis, key == null ? null : serializable(key), byteMap, collection, byteNames);
+						return execReids(jedis, key == null ? null : serializable(key), byteMap, collection, streamCoder, byteNames);
 					} finally {
 						if (map != null && map.size() == 0) {
 							for (byte[] k : byteMap.keySet()) {
@@ -212,30 +212,30 @@ public abstract class CacheOnJedis implements ICache {
 			}
 		}
 
-		protected abstract Serializable execReids(Jedis jedis, String key, String name, String object) throws Exception;
+		protected abstract Object execReids(Jedis jedis, String key, String name, String object) throws Exception;
 		
-		protected abstract Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) throws Exception;
+		protected abstract Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception;
 
-		protected abstract Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) throws Exception;
+		protected abstract Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception;
 		
-		protected abstract Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) throws Exception;
+		protected abstract Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception;
 		
 	}
 	
 	protected class SetExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) {
+		protected Object execReids(Jedis jedis, String key, String name, String object) {
 			return jedis.set(key, object);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) {
 			return jedis.set(key, object);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) {
 			for (String k : map.keySet()) {
 				execReids(jedis, k, null, map.get(k));
 			}
@@ -243,9 +243,9 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) {
 			for (byte[] k : map.keySet()) {
-				execReids(jedis, k, null, map.get(k));
+				execReids(jedis, k, null, map.get(k), streamCoder);
 			}
 			return null;
 		}
@@ -253,36 +253,36 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public void hset(Serializable key, Serializable name, Serializable object) {
+	public void hset(Serializable key, Serializable name, Object object) {
 		hsetExecutor.exec(key, name, object, cacheUnits.get(key));
 	}
 	
 	protected class HsetExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) {
+		protected Object execReids(Jedis jedis, String key, String name, String object) {
 			return jedis.hset(key, name, object);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) {
 			return jedis.hset(key, name, object);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) {
 			return jedis.hmset(key, map);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) {
 			return jedis.hmset(key, map);
 		}
 		
 	}
 
 	@Override
-	public void hmSet(Serializable key, Map<Serializable, Serializable> map) {
+	public void hmSet(Serializable key, Map<Serializable, Object> map) {
 		hsetExecutor.exec(key, map, cacheUnits.get(key), null);
 	}
 
@@ -298,17 +298,17 @@ public abstract class CacheOnJedis implements ICache {
 	protected class DelExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) {
+		protected Object execReids(Jedis jedis, String key, String name, String object) {
 			return jedis.del(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) {
 			return jedis.del(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) {
 			for (String k : names) {
 				execReids(jedis, k, null, null);
 			}
@@ -316,9 +316,9 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) {
 			for (byte[] k : names) {
-				execReids(jedis, k, null, null);
+				execReids(jedis, k, null, null, streamCoder);
 			}
 			return null;
 		}
@@ -326,24 +326,24 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public Serializable get(Serializable key) {
+	public Object get(Serializable key) {
 		return getExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
 	protected class GetExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) throws Exception {
+		protected Object execReids(Jedis jedis, String key, String name, String object) throws Exception {
 			return jedis.get(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) throws Exception {
-			return deserializable(jedis.get(key));
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+			return streamCoder.read(jedis.get(key));
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) throws Exception {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception {
 			for (String k : names) {
 				collection.add(execReids(jedis, k, null, null));
 			}
@@ -351,9 +351,9 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
 			for (byte[] k : names) {
-				collection.add(execReids(jedis, k, null, null));
+				collection.add(execReids(jedis, k, null, null, streamCoder));
 			}
 			return null;
 		}
@@ -361,39 +361,41 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public Serializable hget(Serializable key, Serializable name) {
+	public Object hget(Serializable key, Serializable name) {
 		return hgetExecutor.exec(key, name, null, cacheUnits.get(key));
 	}
 	
 	protected class HgetExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) throws Exception {
+		protected Object execReids(Jedis jedis, String key, String name, String object) throws Exception {
 			return jedis.hget(key, name);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) throws Exception {
-			return deserializable(jedis.hget(key, name));
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+			return streamCoder.read(jedis.hget(key, name));
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) throws Exception {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception {
 			collection.addAll(jedis.hmget(key, names));
 			return null;
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) throws Exception {
-			collection.addAll(jedis.hmget(key, names));
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+			for (byte[] datas : jedis.hmget(key, names)) {
+				collection.add(streamCoder.read(datas));
+			}
 			return null;
 		}
 		
 	}
 
 	@Override
-	public List<Serializable> hmGet(Serializable key, Serializable... names) {
-		List<Serializable> list = Lists.newArrayListWithCapacity(names.length);
+	public List<Object> hmGet(Serializable key, Serializable... names) {
+		List<Object> list = Lists.newArrayListWithCapacity(names.length);
 		hgetExecutor.exec(key, null, cacheUnits.get(key), list, names);
 		return list;
 	}
@@ -406,22 +408,22 @@ public abstract class CacheOnJedis implements ICache {
 	protected class HdelExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) throws Exception {
+		protected Object execReids(Jedis jedis, String key, String name, String object) throws Exception {
 			return jedis.hdel(key, name);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
 			return jedis.hdel(key, name);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) throws Exception {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception {
 			return names.length > 0 ? jedis.hdel(key, names) : 0L;
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
 			return names.length > 0 ? jedis.hdel(key, names) : 0L;
 		}
 		
@@ -429,35 +431,34 @@ public abstract class CacheOnJedis implements ICache {
 
 	@Override
 	public void hmDel(Serializable key, Serializable... names) {
-		List<Serializable> list = Lists.newArrayListWithCapacity(names.length);
-		hdelExecutor.exec(key, null, cacheUnits.get(key), list, names);
+		hdelExecutor.exec(key, null, cacheUnits.get(key), Lists.newArrayListWithCapacity(names.length), names);
 	}
 
 	@Override
 	public long hlen(Serializable key) {
-		return (Long) hlenAndHgetExecutor.exec(key, null, null, cacheUnits.get(key));
+		return (long) hlenAndHgetExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
 	protected class HlenAndHgetAllExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) throws Exception {
+		protected Object execReids(Jedis jedis, String key, String name, String object) throws Exception {
 			return jedis.hlen(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
 			return jedis.hlen(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) throws Exception {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception {
 			map.putAll(jedis.hgetAll(key));
 			return null;
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
 			map.putAll(jedis.hgetAll(key));
 			return null;
 		}
@@ -465,15 +466,15 @@ public abstract class CacheOnJedis implements ICache {
 	}
 
 	@Override
-	public Map<Serializable, Serializable> hGetAll(Serializable key) {
-		Map<Serializable, Serializable> map = Maps.newHashMap();
+	public Map<Serializable, Object> hGetAll(Serializable key) {
+		Map<Serializable, Object> map = Maps.newHashMap();
 		hlenAndHgetExecutor.exec(key, map, cacheUnits.get(key), null);
 		return map;
 	}
 
 	@Override
-	public Set<Serializable> hKeys(Serializable key) {
-		Set<Serializable> keys = Sets.newHashSet();
+	public Set<Object> hKeys(Serializable key) {
+		Set<Object> keys = Sets.newHashSet();
 		hkeysAndTtlExecutor.exec(key, null, cacheUnits.get(keys), keys);
 		return keys;
 	}
@@ -481,23 +482,26 @@ public abstract class CacheOnJedis implements ICache {
 	protected class HkeysAndTtlExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) throws Exception {
+		protected Object execReids(Jedis jedis, String key, String name, String object) throws Exception {
 			return jedis instanceof Jedis ? ((Jedis) jedis).pttl(key) : jedis.ttl(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
 			return execReids(getJedis(), deserializable(key).toString(), null, null);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) throws Exception {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception {
 			return collection.addAll(jedis.hkeys(key));
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) throws Exception {
-			return collection.addAll(jedis.hkeys(key));
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+			for (byte[] k : jedis.hkeys(key)) {
+				collection.add(streamCoder.read(k));
+			}
+			return null;
 		}
 		
 	}
@@ -517,7 +521,7 @@ public abstract class CacheOnJedis implements ICache {
 	
 	@Override
 	public long ttl(String key) {
-		return (Long) hkeysAndTtlExecutor.exec(key, null, null, cacheUnits.get(key));
+		return (long) hkeysAndTtlExecutor.exec(key, null, null, cacheUnits.get(key));
 	}
 	
 	@Override
@@ -528,24 +532,24 @@ public abstract class CacheOnJedis implements ICache {
 	protected class TypeExecutor extends CacheExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, String name, String object) throws Exception {
+		protected Object execReids(Jedis jedis, String key, String name, String object) throws Exception {
 			return jedis.type(key);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, byte[] name, byte[] object) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
 			return jedis.type(key);
 		}
 
 		@Deprecated
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) throws Exception {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception {
 			return null;
 		}
 
 		@Deprecated
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
 			return null;
 		}
 		

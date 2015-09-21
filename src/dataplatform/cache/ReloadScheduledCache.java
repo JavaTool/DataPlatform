@@ -38,13 +38,13 @@ public class ReloadScheduledCache extends PersistenceCache {
 		Serializable syncKey = sync.getKey();
 		lock.lock(); // 锁住
 		try {
-			Map<Serializable, Serializable> keyMap = hGetAll(syncKey); // 获取要操作的键集合
+			Map<Serializable, Object> keyMap = hGetAll(syncKey); // 获取要操作的键集合
 			List<Serializable> deleteKeyList = new LinkedList<Serializable>(); // 用来保存要删除的缓存键
-			List<Serializable> syncList = new LinkedList<Serializable>(); // 用来保存要进行持久化的对象
+			List<Object> syncList = new LinkedList<Object>(); // 用来保存要进行持久化的对象
 			for (Serializable _key : keyMap.keySet()) {
 				if (sync.isHKey(_key)) { // HSet
 					Serializable _HKey = sync.makeHKey(_key); // 转化为对应的键
-					Map<Serializable, Serializable> nameMap = hGetAll(_HKey); // 获取要操作的名称集合
+					Map<Serializable, Object> nameMap = hGetAll(_HKey); // 获取要操作的名称集合
 					Set<Serializable> names = nameMap.keySet();
 					syncList.addAll(hmGet(_key, names.toArray(new Serializable[names.size()]))); // 保存需要持久化的缓存对象
 					List<Serializable> deteleNameList = new LinkedList<Serializable>(); // 用来保存要删除的缓存名称
@@ -59,14 +59,14 @@ public class ReloadScheduledCache extends PersistenceCache {
 					String type = type(_key);
 					switch (CacheType.valueOf(type)) {
 					case string : 
-						Serializable object = get(_key);
+						Object object = get(_key);
 						if (object != null) {
 							syncList.add(object); // 保存需要持久化的缓存对象
 						}
 						break;
 					case hash:
-						Map<Serializable, Serializable> all = hGetAll(_key);
-						for (Serializable value : all.values()) {
+						Map<Serializable, Object> all = hGetAll(_key);
+						for (Object value : all.values()) {
 							syncList.add(value); // 保存需要持久化的缓存对象
 						}
 						break;

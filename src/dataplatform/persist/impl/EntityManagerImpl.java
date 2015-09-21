@@ -1,6 +1,6 @@
 package dataplatform.persist.impl;
 
-import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +15,6 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.proxy.HibernateProxy;
 
-import com.google.common.collect.Maps;
-
 import dataplatform.persist.DataAccessException;
 import dataplatform.persist.IEntityManager;
 
@@ -26,9 +24,9 @@ public class EntityManagerImpl implements IEntityManager {
 	
 	private SessionFactory sessionFactory;
 	
-	private Map<String, EntityPersister> entityPersisters;
+	private HashMap<String, EntityPersister> entityPersisters;
 	
-	private Map<String, Lock> locks;
+	private HashMap<String, Lock> locks;
 	
 	public EntityManagerImpl(Configuration conf) {
 		this.conf = conf;
@@ -43,7 +41,7 @@ public class EntityManagerImpl implements IEntityManager {
 			conf.configure();
 		}
 		sessionFactory = conf.buildSessionFactory();
-		entityPersisters = Maps.newHashMap();
+		entityPersisters = new HashMap<String,EntityPersister>();
 		Iterator ite = sessionFactory.getAllClassMetadata().entrySet().iterator(); 
 		while (ite.hasNext()) {
 			Map.Entry entry = (Map.Entry) ite.next();
@@ -54,7 +52,7 @@ public class EntityManagerImpl implements IEntityManager {
 	}
 	
 	private void initLocks() {
-		locks = Maps.newHashMap();
+		locks = new HashMap<String,Lock>();
 		Iterator<String> ite = entityPersisters.keySet().iterator();
 		while (ite.hasNext()) {
 			String entityName = ite.next();
@@ -70,14 +68,14 @@ public class EntityManagerImpl implements IEntityManager {
 		return sessionFactory.getCurrentSession();
 	}
 	
-	private void checkCreateObject(Serializable o) {
+	private void checkCreateObject(Object o) {
 		if(o instanceof HibernateProxy) {
 			throw new IllegalArgumentException();
 		}
 	}
 
 	@Override
-	public void createSync(Serializable entity) {
+	public void createSync(Object entity) {
 		checkCreateObject(entity);
 		String entityName = entity.getClass().getName();
 		Lock lock = getLock(entityName);
@@ -100,14 +98,21 @@ public class EntityManagerImpl implements IEntityManager {
 	}
 
 	@Override
-	public void createSync(Serializable[] entity) {
-		for (Serializable en : entity) {
-			createSync(en);
+	public void createSync(Object[] entity) {
+		for (Object en : entity) {
+			if (en != null) {
+				createSync(en);
+			}
 		}
 	}
+	
+//	private Serializable getEntityIdentifier(String entityName, Object entity, EntityMode entityMode) {
+//		EntityPersister eper = entityPersisters.get(entityName);
+//		return eper.getIdentifier(entity, entityMode);
+//	}
 
 	@Override
-	public void deleteSync(Serializable entity) {
+	public void deleteSync(Object entity) {
 		String entityName = entity.getClass().getName();
 		Lock lock = getLock(entityName);
 		lock.lock();
@@ -129,18 +134,21 @@ public class EntityManagerImpl implements IEntityManager {
 	}
 
 	@Override
-	public void deleteSync(Serializable[] entity) {
-		for (Serializable en : entity) {
-			deleteSync(en);
+	public void deleteSync(Object[] entity) {
+		for (Object en : entity) {
+			if (en != null) {
+				deleteSync(en);
+			}
 		}
 	}
 
 	@Override
-	public void updateSync(Serializable entity) {
+	public void updateSync(Object entity) {
 		String entityName = entity.getClass().getName();
 		Lock lock = getLock(entityName);
 		lock.lock();
 		try {
+//			Serializable id = getEntityIdentifier(entityName, entity, EntityMode.POJO);
 			Session session = getSession();
 			Transaction tx = session.beginTransaction();
 			try {
@@ -160,15 +168,17 @@ public class EntityManagerImpl implements IEntityManager {
 	}
 
 	@Override
-	public void updateSync(Serializable[] entity) {
-		for (Serializable en : entity) {
-			updateSync(en);
+	public void updateSync(Object[] entity) {
+		for (Object en : entity) {
+			if (en != null) {
+				updateSync(en);
+			}
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Serializable> T fetch(Class<T> klass, String hql, Object... values) {
+	public <T> T fetch(Class<T> klass, String hql, Object... values) {
 		return (T) fetch(klass.getName(), hql, values);
 	}
 
@@ -208,7 +218,7 @@ public class EntityManagerImpl implements IEntityManager {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Serializable> List<T> query(Class<T> klass, String hql, Object... values) {
+	public <T> List<T> query(Class<T> klass, String hql, Object... values) {
 		return query(klass.getName(), hql, values);
 	}
 
@@ -246,7 +256,7 @@ public class EntityManagerImpl implements IEntityManager {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Serializable> List<T> limitQuery(Class<T> klass, String hql, int start, int count, Object... values) {
+	public <T> List<T> limitQuery(Class<T> klass, String hql, int start, int count, Object... values) {
 		return limitQuery(klass.getName(), hql, start, count, values);
 	}
 
@@ -333,6 +343,11 @@ public class EntityManagerImpl implements IEntityManager {
 	@Override
 	public void shutdown() throws Exception {
 		sessionFactory.close();
+	}
+
+	@Override
+	public Configuration getConfiguration() {
+		return conf;
 	}
 
 }

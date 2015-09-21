@@ -11,6 +11,7 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import com.google.common.collect.Lists;
 
+import dataplatform.cache.IStreamCoder;
 import dataplatform.cache.sequence.ICounter;
 
 public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
@@ -28,13 +29,13 @@ public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
 	}
 
 	@Override
-	public void mSet(Map<Serializable, Serializable> map) {
+	public void mSet(Map<Serializable, Object> map) {
 		int mapSize = map.size();
 		Serializable[] array = new Serializable[mapSize << 1];
 		int index = 0;
 		for (Serializable key : map.keySet()) {
 			array[index << 1] = key;
-			array[(index << 1) + 1] = map.get(key);
+			array[(index << 1) + 1] = (Serializable) map.get(key); // TODO Object
 			index++;
 		}
 		setExecutor.exec(null, null, checkMCache(array), null, array);
@@ -48,12 +49,12 @@ public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
 	protected class SetExecutorEx extends SetExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) {
 			return jedis.mset(names);
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) {
 			return jedis.mset(names);
 		}
 		
@@ -65,8 +66,8 @@ public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
 	}
 
 	@Override
-	public List<Serializable> mGet(Serializable... keys) {
-		List<Serializable> list = Lists.newArrayListWithCapacity(keys.length);
+	public List<Object> mGet(Serializable... keys) {
+		List<Object> list = Lists.newArrayListWithCapacity(keys.length);
 		getExecutor.exec(null, null, checkMCache(keys), list, keys);
 		return list;
 	}
@@ -74,13 +75,16 @@ public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
 	protected class GetExecutorEx extends GetExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) {
+		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) {
 			return collection.addAll(jedis.mget(names));
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) {
-			return collection.addAll(jedis.mget(names));
+		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+			for (byte[] datas : jedis.mget(names)) {
+				collection.add((Serializable) streamCoder.read(datas));
+			}
+			return null;
 		}
 		
 	}
@@ -159,15 +163,15 @@ public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
 
 	@Override
 	public void useFinish(Jedis jedis) {
-		// close
-		try {
-			jedis.close();
-		} catch (Exception e) {
-			log.error("", e);
-		}
 		// quit
 		try {
 			jedis.quit();
+		} catch (Exception e) {
+			log.error("", e);
+		}
+		// close
+		try {
+			jedis.close();
 		} catch (Exception e) {
 			log.error("", e);
 		}

@@ -8,8 +8,8 @@ import dataplatform.cache.ICacheUnit;
 
 interface ICacheExecutor {
 	
-	Serializable exec(Serializable key, Serializable name, Serializable object, ICacheUnit cacheUnit);
+	Object exec(Serializable key, Serializable name, Object object, ICacheUnit cacheUnit);
 	
-	Serializable exec(Serializable key, Map<Serializable, Serializable> map, ICacheUnit cacheUnit, Collection<Serializable> list, Serializable... names);
+	Object exec(Serializable key, Map<Serializable, Object> map, ICacheUnit cacheUnit, Collection<Object> list, Serializable... names);
 
 }

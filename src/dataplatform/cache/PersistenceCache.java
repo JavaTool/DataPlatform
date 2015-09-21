@@ -54,22 +54,22 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	}
 	
 	@Override
-	public void set(Serializable key, Serializable object) {
+	public void set(Serializable key, Object object) {
 		cache.set(key, object);
 	}
 
 	@Override
-	public void hset(Serializable key, Serializable name, Serializable object) {
+	public void hset(Serializable key, Serializable name, Object object) {
 		cache.hset(key, name, object);
 	}
 
 	@Override
-	public void mSet(Map<Serializable, Serializable> map) {
+	public void mSet(Map<Serializable, Object> map) {
 		cache.mSet(map);
 	}
 
 	@Override
-	public void hmSet(Serializable key, Map<Serializable, Serializable> map) {
+	public void hmSet(Serializable key, Map<Serializable, Object> map) {
 		cache.hmSet(key, map);
 	}
 
@@ -94,32 +94,32 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	}
 
 	@Override
-	public Serializable get(Serializable key) {
+	public Object get(Serializable key) {
 		return cache.get(key);
 	}
 
 	@Override
-	public Serializable hget(Serializable key, Serializable name) {
+	public Object hget(Serializable key, Serializable name) {
 		return cache.hget(key, name);
 	}
 
 	@Override
-	public List<Serializable> mGet(Serializable... keys) {
+	public List<Object> mGet(Serializable... keys) {
 		return cache.mGet(keys);
 	}
 
 	@Override
-	public List<Serializable> hmGet(Serializable key, Serializable... names) {
+	public List<Object> hmGet(Serializable key, Serializable... names) {
 		return cache.hmGet(key, names);
 	}
 
 	@Override
-	public Map<Serializable, Serializable> hGetAll(Serializable key) {
+	public Map<Serializable, Object> hGetAll(Serializable key) {
 		return cache.hGetAll(key);
 	}
 
 	@Override
-	public Set<Serializable> hKeys(Serializable key) {
+	public Set<Object> hKeys(Serializable key) {
 		return cache.hKeys(key);
 	}
 

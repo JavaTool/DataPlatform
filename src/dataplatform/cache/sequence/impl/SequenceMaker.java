@@ -21,7 +21,8 @@ public class SequenceMaker implements IInstanceIdMaker {
 
 	@Override
 	public synchronized int nextInstanceId() {
-		return ((Integer) cache.get(name)) + 1;
+		Object value = cache.get(name);
+		return value == null ? 0 : Integer.parseInt(value.toString()) + 1;
 	}
 
 }

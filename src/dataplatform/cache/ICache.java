@@ -73,7 +73,7 @@ public interface ICache {
 	 * @param 	object
 	 * 			对象
 	 */
-	void set(Serializable key, Serializable object);
+	void set(Serializable key, Object object);
 	/**
 	 * 存储一个对象
 	 * @param 	key
@@ -104,13 +104,13 @@ public interface ICache {
 	 * @param 	object
 	 * 			对象
 	 */
-	void hset(Serializable key, Serializable name, Serializable object);
+	void hset(Serializable key, Serializable name, Object object);
 	/**
 	 * 存储多个对象
 	 * @param 	map
 	 * 			键值集合
 	 */
-	void mSet(Map<Serializable, Serializable> map);
+	void mSet(Map<Serializable, Object> map);
 	/**
 	 * 以哈希的方式存储多个对象
 	 * @param 	key
@@ -118,7 +118,7 @@ public interface ICache {
 	 * @param 	map
 	 * 			键值集合
 	 */
-	void hmSet(Serializable key, Map<Serializable, Serializable> map);
+	void hmSet(Serializable key, Map<Serializable, Object> map);
 	/**
 	 * 删除一个键所对应的内容
 	 * @param 	key
@@ -153,7 +153,7 @@ public interface ICache {
 	 * 			键
 	 * @return	存储内容
 	 */
-	Serializable get(Serializable key);
+	Object get(Serializable key);
 	/**
 	 * 以哈希的方式获取一个存储内容
 	 * @param 	key
@@ -162,14 +162,14 @@ public interface ICache {
 	 * 			哈希名称
 	 * @return	存储内容
 	 */
-	Serializable hget(Serializable key, Serializable name);
+	Object hget(Serializable key, Serializable name);
 	/**
 	 * 获取多个存储内容
 	 * @param 	keys
 	 * 			键集合
 	 * @return	存储内容列表
 	 */
-	List<Serializable> mGet(Serializable... keys);
+	List<Object> mGet(Serializable... keys);
 	/**
 	 * 以哈希的方式获取多个存储内容
 	 * @param 	key
@@ -178,21 +178,21 @@ public interface ICache {
 	 * 			哈希名称集合
 	 * @return	存储内容列表
 	 */
-	List<Serializable> hmGet(Serializable key, Serializable... names);
+	List<Object> hmGet(Serializable key, Serializable... names);
 	/**
 	 * 获取存储的整个哈希内容
 	 * @param 	key
 	 * 			建
 	 * @return	整个哈希内容
 	 */
-	Map<Serializable, Serializable> hGetAll(Serializable key);
+	Map<Serializable, Object> hGetAll(Serializable key);
 	/**
 	 * 获取存储的整个哈希键集合
 	 * @param 	key
 	 * 			建
 	 * @return	整个哈希键集合
 	 */
-	Set<Serializable> hKeys(Serializable key);
+	Set<Object> hKeys(Serializable key);
 	/**
 	 * 清空缓存
 	 */

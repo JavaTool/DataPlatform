@@ -12,6 +12,7 @@ import redis.clients.jedis.Jedis;
 
 import com.google.common.collect.Lists;
 
+import dataplatform.cache.IStreamCoder;
 import dataplatform.cache.sequence.ICounter;
 
 /**
@@ -75,8 +76,8 @@ public class CacheOnSingleJedis extends CacheOnJedis implements ICounter {
 	}
 
 	@Override
-	public List<Serializable> mGet(Serializable... keys) {
-		List<Serializable> list = Lists.newArrayListWithCapacity(keys.length);
+	public List<Object> mGet(Serializable... keys) {
+		List<Object> list = Lists.newArrayListWithCapacity(keys.length);
 		getExecutor.exec(null, null, checkMCache(keys), list, keys);
 		return list;
 	}
@@ -84,26 +85,29 @@ public class CacheOnSingleJedis extends CacheOnJedis implements ICounter {
 	protected class GetExecutorEx extends GetExecutor {
 
 		@Override
-		protected Serializable execReids(Jedis jedis, String key, Map<String, String> map, Collection<Serializable> collection, String... names) {
+		protected Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) {
 			return collection.addAll(jedis.mget(names));
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Serializable> collection, byte[]... names) {
-			return collection.addAll(jedis.mget(names));
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+			for (byte[] datas : jedis.mget(names)) {
+				collection.add((Serializable) streamCoder.read(datas));
+			}
+			return null;
 		}
 		
 	}
 
 	@Override
-	public void mSet(Map<Serializable, Serializable> map) {
+	public void mSet(Map<Serializable, Object> map) {
 		try {
 			int mapSize = map.size();
 			byte[][] keysvalues = new byte[mapSize << 1][];
 			int index = 0;
 			for (Serializable key : map.keySet()) {
 				keysvalues[index << 1] = serializable(key);
-				keysvalues[(index << 1) + 1] = serializable(map.get(key));
+				keysvalues[(index << 1) + 1] = serializable((Serializable) map.get(key)); // TODO Object
 				index++;
 			}
 			getJedis().mset(keysvalues);

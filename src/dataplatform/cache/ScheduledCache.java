@@ -57,7 +57,7 @@ public class ScheduledCache extends PersistenceCache {
 			if (createHmap.containsKey(key)) { // HSet
 				Collection<Serializable> queue = createHmap.get(key);
 				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
-				List<Serializable> list = hmGet(key, names);
+				List<Object> list = hmGet(key, names);
 				entityManager.createSync(list.toArray(new Serializable[list.size()]));
 				tryDeleteCache(key, queue);
 			} else { // Set
@@ -104,7 +104,7 @@ public class ScheduledCache extends PersistenceCache {
 			if (updateHmap.containsKey(key)) {
 				Collection<Serializable> queue = updateHmap.get(key);
 				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
-				List<Serializable> list = hmGet(key, names);
+				List<Object> list = hmGet(key, names);
 				entityManager.updateSync(list.toArray(new Serializable[list.size()]));
 				tryDeleteCache(key, queue);
 			} else {
@@ -121,7 +121,7 @@ public class ScheduledCache extends PersistenceCache {
 			if (deleteHmap.containsKey(key)) {
 				Collection<Serializable> queue = deleteHmap.get(key);
 				Serializable[] names = queue.toArray(new Serializable[queue.size()]);
-				List<Serializable> list = hmGet(key, names);
+				List<Object> list = hmGet(key, names);
 				entityManager.updateSync(list.toArray(new Serializable[list.size()]));
 				hmDel(key, names);
 			} else {
