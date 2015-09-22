@@ -1,10 +1,11 @@
 package dataplatform.cache;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+
+import com.google.common.collect.Lists;
 
 import dataplatform.persist.IEntityManager;
 
@@ -38,15 +39,15 @@ public class ReloadScheduledCache extends PersistenceCache {
 		lock.lock(); // 锁住
 		try {
 			Map<String, Object> keyMap = hGetAll(syncKey); // 获取要操作的键集合
-			List<String> deleteKeyList = new LinkedList<String>(); // 用来保存要删除的缓存键
-			List<Object> syncList = new LinkedList<Object>(); // 用来保存要进行持久化的对象
+			List<String> deleteKeyList = Lists.newLinkedList(); // 用来保存要删除的缓存键
+			List<Object> syncList = Lists.newLinkedList(); // 用来保存要进行持久化的对象
 			for (String _key : keyMap.keySet()) {
 				if (sync.isHKey(_key)) { // HSet
 					String _HKey = sync.makeHKey(_key); // 转化为对应的键
 					Map<String, Object> nameMap = hGetAll(_HKey); // 获取要操作的名称集合
 					Set<String> names = nameMap.keySet();
 					syncList.addAll(hmGet(_key, names.toArray(new String[names.size()]))); // 保存需要持久化的缓存对象
-					List<String> deteleNameList = new LinkedList<String>(); // 用来保存要删除的缓存名称
+					List<String> deteleNameList = Lists.newLinkedList(); // 用来保存要删除的缓存名称
 					for (String name : names) {
 						if (deleteAll || (Boolean) nameMap.get(name)) {
 							deteleNameList.add(name); // 保存要删除的缓存名称
