@@ -588,6 +588,7 @@ public abstract class CacheOnJedis implements ICache {
 		for (ICacheUnit cacheUnit : cacheUnits.values()) {
 			if (cacheUnit.delAtShutdown()) {
 				del(cacheUnit);
+				log.info("Delete key [{}] on shutdown.", cacheUnit.getKey());
 			}
 		}
 	}
