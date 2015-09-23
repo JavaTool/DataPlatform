@@ -79,7 +79,7 @@ public class ReloadScheduledCache extends PersistenceCache {
 					}
 				}
 			}
-			sync.execute(syncList.toArray(new String[syncList.size()])); // 进行持久化操作
+			sync.execute(syncList.toArray(new Object[syncList.size()])); // 进行持久化操作
 			del(syncKey);
 			mDel(deleteKeyList.toArray(new String[deleteKeyList.size()])); // 删除不需要缓存的对象
 		} finally {
@@ -145,7 +145,7 @@ public class ReloadScheduledCache extends PersistenceCache {
 		 * @param 	entity
 		 * 			实体
 		 */
-		public abstract void execute(String[] entity);
+		public abstract void execute(Object[] entity);
 		/**
 		 * 生成哈希键
 		 * @param 	key
@@ -175,7 +175,7 @@ public class ReloadScheduledCache extends PersistenceCache {
 		}
 
 		@Override
-		public void execute(String[] entity) {
+		public void execute(Object[] entity) {
 			entityManager.createSync(entity);
 		}
 
@@ -197,7 +197,7 @@ public class ReloadScheduledCache extends PersistenceCache {
 		}
 
 		@Override
-		public void execute(String[] entity) {
+		public void execute(Object[] entity) {
 			entityManager.updateSync(entity);
 		}
 
@@ -219,7 +219,7 @@ public class ReloadScheduledCache extends PersistenceCache {
 		}
 
 		@Override
-		public void execute(String[] entity) {
+		public void execute(Object[] entity) {
 			entityManager.updateSync(entity);
 		}
 
