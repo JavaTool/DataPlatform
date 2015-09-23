@@ -5,8 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
+import org.hibernate.type.StandardBasicTypes;
 
 import dataplatform.persist.BlobUserType;
 
@@ -15,7 +15,7 @@ public abstract class AbstractBlobUserType implements BlobUserType {
 	/**
 	 * 数据库中保存的数据类型
 	 */
-	private static final int[] SQL_TYPES = {Hibernate.BINARY.sqlType()};
+	private static final int[] SQL_TYPES = {StandardBasicTypes.BINARY.sqlType()};
 
 	@Override
 	public Object assemble(Serializable arg0, Object arg1) throws HibernateException {
@@ -38,7 +38,7 @@ public abstract class AbstractBlobUserType implements BlobUserType {
 		if (bytes != null) {
 			statement.setBytes(index, bytes);
 		} else {
-			statement.setNull(index, Hibernate.BINARY.sqlType());
+			statement.setNull(index, StandardBasicTypes.BINARY.sqlType());
 		}
 	}
 
