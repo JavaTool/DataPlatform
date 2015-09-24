@@ -8,8 +8,8 @@ public class SimplePubsub implements ISimplePubsub {
 	
 	protected final EventBus pubsub;
 	
-	public SimplePubsub(EventBus pubsub) {
-		this.pubsub = pubsub;
+	public SimplePubsub() {
+		pubsub = new EventBus();
 	}
 
 	@Override
