@@ -23,4 +23,9 @@ public class EventBusPubsub implements IPubsub {
 		eventBus.register(subscribe);
 	}
 
+	@Override
+	public void unsubscribe(ISubscribe subscribe, String... channel) {
+		eventBus.unregister(subscribe);
+	}
+
 }

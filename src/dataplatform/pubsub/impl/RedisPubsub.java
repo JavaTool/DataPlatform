@@ -1,6 +1,6 @@
 package dataplatform.pubsub.impl;
 
-import java.util.concurrent.ExecutorService;
+import java.util.Map;
 import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
@@ -10,6 +10,10 @@ import redis.clients.jedis.BinaryJedisPubSub;
 import redis.clients.jedis.Jedis;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import dataplatform.cache.IStreamCoder;
 import dataplatform.cache.redis.CacheOnJedis;
@@ -22,16 +26,21 @@ public class RedisPubsub implements IPubsub {
 	
 	private static final Logger log = LoggerFactory.getLogger(RedisPubsub.class);
 	
+	private static final int THREAD_COUNT = 5;
+	
 	private final CacheOnJedis cache;
 	
-	private final ExecutorService executorService;
-	
 	private final IStreamCoder coder;
+	
+	private final Map<ISubscribe, ListenableFuture<SubscribeThread>> subscribes;
+	
+	private final ListeningExecutorService listeningExecutorService;
 	
 	public RedisPubsub(CacheOnJedis cache, IStreamCoder coder) {
 		this.cache = cache;
 		this.coder = coder;
-		executorService = Executors.newSingleThreadExecutor();
+		listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_COUNT));
+		subscribes = Maps.newConcurrentMap();
 	}
 	
 	public RedisPubsub(CacheOnJedis cache) {
@@ -57,16 +66,34 @@ public class RedisPubsub implements IPubsub {
 	@Override
 	public void subscribe(ISubscribe subscribe, String... channel) {
 		try {
-			byte[][] channels = new byte[channel.length][];
-			for (int i = 0;i < channel.length;i++) {
-				channels[i] = SerializaUtil.serializable(channel[i]);
-			}
+			SubscribeThread subscribeThread = new SubscribeThread(subscribe, stringToBytes(channel));
+			ListenableFuture<SubscribeThread> future = listeningExecutorService.submit(subscribeThread, subscribeThread);
+			subscribes.put(subscribe, future);
 			
-			executorService.execute(new SubscribeThread(subscribe, channels));
 			log.info("subscribe : " + subscribe);
 		} catch (Exception e) {
 			log.error("", e);
 		}
+	}
+
+	@Override
+	public void unsubscribe(ISubscribe subscribe, String... channel) {
+		ListenableFuture<SubscribeThread> future = subscribes.get(subscribe);
+		if (future != null) {
+			try {
+				future.get().unsubscribe(stringToBytes(channel));
+			} catch (Exception e) {
+				log.error("", e);
+			}
+		}
+	}
+	
+	protected byte[][] stringToBytes(String... channel) throws Exception {
+		byte[][] channels = new byte[channel.length][];
+		for (int i = 0;i < channel.length;i++) {
+			channels[i] = SerializaUtil.serializable(channel[i]);
+		}
+		return channels;
 	}
 	
 	protected class SubscribeThread extends BinaryJedisPubSub implements Runnable {

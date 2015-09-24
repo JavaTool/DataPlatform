@@ -2,14 +2,18 @@ package dataplatform.pubsub.impl;
 
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import dataplatform.pubsub.IPubsub;
 import dataplatform.pubsub.ISubscribe;
@@ -18,13 +22,18 @@ public class JavaBlockQueue implements IPubsub {
 	
 	private static final Logger log = LoggerFactory.getLogger(JavaBlockQueue.class);
 	
+	private static final int THREAD_COUNT = 20;
+	
 	private final Map<String, BlockingQueue<Object>> map;
 	
-	private final ExecutorService executorService;
+	private final Table<ISubscribe, String, ListenableFuture<ISubscribe>> subscribes;
+	
+	private final ListeningExecutorService listeningExecutorService;
 	
 	public JavaBlockQueue() {
 		map = Maps.newHashMap();
-		executorService = Executors.newSingleThreadExecutor();
+		listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_COUNT));
+		subscribes = HashBasedTable.create();
 	}
 
 	@Override
@@ -39,7 +48,18 @@ public class JavaBlockQueue implements IPubsub {
 	@Override
 	public void subscribe(ISubscribe subscribe, String... channel) {
 		for (String key : channel) {
-			executorService.execute(new SubscribeThread(getBlockingQueue(key), subscribe, key));
+			SubscribeThread subscribeThread = new SubscribeThread(getBlockingQueue(key), subscribe, key);
+			subscribes.put(subscribe, key, listeningExecutorService.submit(subscribeThread, subscribe));
+		}
+	}
+
+	@Override
+	public void unsubscribe(ISubscribe subscribe, String... channel) {
+		for (String key : channel) {
+			ListenableFuture<ISubscribe> future = subscribes.get(subscribe, key);
+			if (future != null) {
+				future.cancel(true);
+			}
 		}
 	}
 	

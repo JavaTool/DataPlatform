@@ -1,13 +1,20 @@
 package dataplatform.pubsub.impl;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
+import java.util.Map;
 import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import dataplatform.cache.IStreamCoder;
 import dataplatform.cache.redis.CacheOnJedis;
 import dataplatform.cache.redis.CacheOnJedisPool;
@@ -20,16 +27,21 @@ public class RedisBlockQueue implements IPubsub {
 	
 	private static final Logger log = LoggerFactory.getLogger(RedisBlockQueue.class);
 	
+	private static final int THREAD_COUNT = 5;
+	
 	private final CacheOnJedis cache;
 	
-	private final ExecutorService executorService;
-	
 	private final IStreamCoder coder;
+	
+	private final Map<ISubscribe, ListenableFuture<SubscribeThread>> subscribes;
+	
+	private final ListeningExecutorService listeningExecutorService;
 	
 	public RedisBlockQueue(CacheOnJedis cache, IStreamCoder coder) {
 		this.cache = cache;
 		this.coder = coder;
-		executorService = Executors.newSingleThreadExecutor();
+		listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_COUNT));
+		subscribes = Maps.newConcurrentMap();
 	}
 	
 	public RedisBlockQueue(CacheOnJedis cache) {
@@ -50,7 +62,21 @@ public class RedisBlockQueue implements IPubsub {
 
 	@Override
 	public void subscribe(ISubscribe subscribe, String... channel) {
-		executorService.execute(new SubscribeThread(subscribe, channel));
+		SubscribeThread subscribeThread = new SubscribeThread(subscribe, channel);
+		ListenableFuture<SubscribeThread> future = listeningExecutorService.submit(subscribeThread, subscribeThread);
+		subscribes.put(subscribe, future);
+	}
+
+	@Override
+	public void unsubscribe(ISubscribe subscribe, String... channel) {
+		ListenableFuture<SubscribeThread> future = subscribes.get(subscribe);
+		if (future != null) {
+			try {
+				future.get().removeChannels(future, channel);
+			} catch (Exception e) {
+				log.error("", e);
+			}
+		}
 	}
 	
 	protected class SubscribeThread implements Runnable {
@@ -62,6 +88,21 @@ public class RedisBlockQueue implements IPubsub {
 		public SubscribeThread(ISubscribe subscribe, String... channels) {
 			this.subscribe = subscribe;
 			this.channels = channels;
+		}
+		
+		public void removeChannels(ListenableFuture<SubscribeThread> future, String... channels) {
+			// stop thread
+			future.cancel(true);
+			// remove channel
+			List<String> list = Lists.newArrayList(this.channels);
+			for (String channel : channels) {
+				list.remove(channel);
+			}
+			// start new thread
+			String[] newChannels = list.toArray(new String[list.size()]);
+			if (newChannels.length > 0) {
+				subscribe(subscribe, newChannels);
+			}
 		}
 
 		@Override
