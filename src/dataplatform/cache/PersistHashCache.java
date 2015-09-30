@@ -11,8 +11,8 @@ public class PersistHashCache<V extends IHashCachedObject> extends HashCache<V> 
 	
 	protected final Queue<V> deleteQueue;
 
-	public PersistHashCache(String preKey, ICache cache, IEntityManager entityManager) {
-		super(preKey, cache);
+	public PersistHashCache(String preKey, ICache cache, IEntityManager entityManager, Class<V> clz) {
+		super(preKey, cache, clz);
 		this.entityManager = entityManager;
 		deleteQueue = new ConcurrentLinkedQueue<V>();
 	}
@@ -28,14 +28,28 @@ public class PersistHashCache<V extends IHashCachedObject> extends HashCache<V> 
 	}
 	
 	public void delete(String key, V hashObject, boolean persist) {
-		if (persist) {
-			deleteQueue.add(hashObject);
+		if (hashObject != null) {
+			if (persist) {
+				deleteQueue.add(hashObject);
+			}
+			super.delete(key, hashObject);
 		}
-		super.delete(key, hashObject);
 	}
 	
-	public void delete() {
-		entityManager.deleteSync(deleteQueue.toArray());
+	public void deleteSync() {
+		Object[] values = new Object[deleteQueue.size()];
+		StringBuilder builder = new StringBuilder("delete from ");
+		builder.append(clz.getSimpleName()).append(" where id in (");
+		for (int i = 0;i < values.length;i++) {
+			values[i++] = getPrimaryKey(deleteQueue.poll());
+			builder.append("?,");
+		}
+		builder.deleteCharAt(builder.length() - 1).append(")");
+		entityManager.deleteSync(builder.toString(), values);
+	}
+	
+	protected Object getPrimaryKey(V v) {
+		return v.getHashName();
 	}
 
 }

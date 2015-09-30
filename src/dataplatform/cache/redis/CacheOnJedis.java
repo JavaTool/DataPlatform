@@ -579,8 +579,9 @@ public abstract class CacheOnJedis implements ICache {
 	
 	@Override
 	public void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
-		Preconditions.checkArgument(!cacheUnits.containsKey(key), "Repeat cache key[{}].", key);
+		Preconditions.checkArgument(!containsCacheKey(key), "Repeat cache key[{}].", key);
 		cacheUnits.put(key, CacheUnitFactory.createCacheUnit(key, valueClass, delAtShutdown, streamCoder));
+		log.info("Cache unit key : {}.", key);
 	}
 	
 	@Override
@@ -595,13 +596,18 @@ public abstract class CacheOnJedis implements ICache {
 	
 	protected ICacheUnit checkMCache(String... keys) {
 		ICacheUnit cacheUnit = null;
-		for (String key : keys) {
-			if (!(cacheUnit == null && !cacheUnits.containsKey(key))) {
-				Preconditions.checkArgument(cacheUnit != null && cacheUnits.containsKey(key), "Not only cache unit.");
+		for (int i = 0;i < keys.length;i++) {
+			if (i > 0 && (cacheUnit == null && !containsCacheKey(keys[i]))) {
+				Preconditions.checkArgument(cacheUnit != null && containsCacheKey(keys[i]), "Not only cache unit.");
 			}
-			cacheUnit = cacheUnits.get(key);
+			cacheUnit = cacheUnits.get(keys[i]);
 		}
 		return cacheUnit;
+	}
+	
+	@Override
+	public boolean containsCacheKey(String key) {
+		return cacheUnits.containsKey(key);
 	}
 
 }

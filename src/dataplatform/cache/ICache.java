@@ -42,6 +42,13 @@ public interface ICache {
 	 */
 	void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder);
 	/**
+	 * 是否已经注册过缓存键
+	 * @param 	key
+	 * 			键
+	 * @return	是否注册过
+	 */
+	boolean containsCacheKey(String key);
+	/**
 	 * 设置键存在时间
 	 * @param 	key
 	 * 			键

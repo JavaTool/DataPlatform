@@ -15,12 +15,15 @@ public class HashCache<V extends IHashCachedObject> {
 	
 	protected final IForEach<V> mGetForeach;
 	
-	public HashCache(String preKey, ICache cache) {
+	protected final Class<V> clz;
+	
+	public HashCache(String preKey, ICache cache, Class<V> clz) {
 		this.preKey = preKey;
 		this.cache = cache;
+		this.clz = clz;
 		mSetForeach = createMSetForEach();
 		mGetForeach = createMGetForEach();
-		cache.registerCache(preKey, IHashCachedObject.class, true, null);
+		cache.registerCache(preKey, clz, true, null);
 	}
 	
 	public void cache(Object key, V hashObject) {
@@ -28,18 +31,20 @@ public class HashCache<V extends IHashCachedObject> {
 	}
 	
 	public void cache(String key, V hashObject) {
-		cache.hset(makeKey(key), hashObject.getHashName(), hashObject);
+		cache.hset(checkAndMakeKey(key), hashObject.getHashName(), hashObject);
 	}
 	
 	public void cache(String key, Map<?, V> hashObjects, IForEach<V> foreach) {
-		Map<String, Object> map = Maps.newHashMap();
-		for (V hashObject : hashObjects.values()) {
-			map.put(hashObject.getHashName(), hashObject);
-			if (foreach != null) {
-				foreach.each(key, hashObject);
+		if (hashObjects.size() > 0) {
+			Map<String, Object> map = Maps.newHashMap();
+			for (V hashObject : hashObjects.values()) {
+				map.put(hashObject.getHashName(), hashObject);
+				if (foreach != null) {
+					foreach.each(key, hashObject);
+				}
 			}
+			cache.hmSet(checkAndMakeKey(key), map);
 		}
-		cache.hmSet(makeKey(key), map);
 	}
 	
 	public void cache(String key, Map<?, V> hashObjects, boolean foreach) {
@@ -53,6 +58,10 @@ public class HashCache<V extends IHashCachedObject> {
 
 	public V get(Object key, Object name) {
 		return get(key.toString(), name.toString());
+	}
+	
+	public void delete(String key) {
+		cache.del(makeKey(key));
 	}
 	
 	public void delete(String key, String name) {
@@ -86,6 +95,14 @@ public class HashCache<V extends IHashCachedObject> {
 	
 	protected String makeKey(String key) {
 		return key == null || key.length() == 0 ? preKey : (preKey + "_" + key);
+	}
+	
+	protected String checkAndMakeKey(String key) {
+		String cacheKey = makeKey(key);
+		if (!cache.containsCacheKey(cacheKey)) {
+			cache.registerCache(cacheKey, clz, true, null);
+		}
+		return cacheKey;
 	}
 	
 	protected IForEach<V> createMSetForEach() {

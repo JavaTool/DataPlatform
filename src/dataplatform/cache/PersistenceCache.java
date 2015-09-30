@@ -187,4 +187,9 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 		cache.shutdown();
 	}
 
+	@Override
+	public boolean containsCacheKey(String key) {
+		return cache.containsCacheKey(key);
+	}
+
 }

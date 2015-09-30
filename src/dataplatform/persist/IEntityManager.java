@@ -10,6 +10,8 @@ public interface IEntityManager {
 	
 	void createSync(Object[] entity);
 	
+	int deleteSync(String hql, Object... values);
+	
 	void deleteSync(Object entity);
 	
 	void deleteSync(Object[] entity);

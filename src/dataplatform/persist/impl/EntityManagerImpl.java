@@ -351,4 +351,24 @@ public class EntityManagerImpl implements IEntityManager {
 		return conf;
 	}
 
+	@Override
+	public int deleteSync(String hql, Object... values) {
+		Session session = getSession();
+		Transaction tx = session.beginTransaction();
+		try {
+			Query query = session.createQuery(hql);
+			if (values != null) {
+				for (int i = 0; i < values.length; i++) {
+					query.setParameter(i, values[i]);
+				}
+			}
+			int ret = query.executeUpdate();
+			tx.commit();
+			return ret;
+		} catch (Exception e) {
+			tx.rollback();
+			throw new DataAccessException(e);
+		}
+	}
+
 }
