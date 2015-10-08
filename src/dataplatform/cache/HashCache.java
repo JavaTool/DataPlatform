@@ -53,7 +53,7 @@ public class HashCache<V extends IHashCachedObject> {
 	
 	@SuppressWarnings("unchecked")
 	public V get(String key, String name) {
-		return (V) cache.hget(makeKey(key), name);
+		return (V) cache.hget(checkAndMakeKey(key), name);
 	}
 
 	public V get(Object key, Object name) {
@@ -61,20 +61,20 @@ public class HashCache<V extends IHashCachedObject> {
 	}
 	
 	public void delete(String key) {
-		cache.del(makeKey(key));
+		cache.del(checkAndMakeKey(key));
 	}
 	
 	public void delete(String key, String name) {
-		cache.hdel(makeKey(key), name);
+		cache.hdel(checkAndMakeKey(key), name);
 	}
 	
 	public void delete(String key, V hashObject) {
-		delete(makeKey(key), hashObject.getHashName());
+		delete(key, hashObject.getHashName());
 	}
 	
 	@SuppressWarnings("unchecked")
 	public Map<String, V> getAll(String key, IForEach<V> foreach) {
-		Map<String, V> all = (Map<String, V>) cache.hGetAll(makeKey(key));
+		Map<String, V> all = (Map<String, V>) cache.hGetAll(checkAndMakeKey(key));
 		if (foreach != null) {
 			for (V v : all.values()) {
 				foreach.each(key, v);

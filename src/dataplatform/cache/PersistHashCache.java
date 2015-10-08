@@ -37,15 +37,18 @@ public class PersistHashCache<V extends IHashCachedObject> extends HashCache<V> 
 	}
 	
 	public void deleteSync() {
-		Object[] values = new Object[deleteQueue.size()];
-		StringBuilder builder = new StringBuilder("delete from ");
-		builder.append(clz.getSimpleName()).append(" where id in (");
-		for (int i = 0;i < values.length;i++) {
-			values[i++] = getPrimaryKey(deleteQueue.poll());
-			builder.append("?,");
+		int size = deleteQueue.size();
+		if (size > 0) {
+			Object[] values = new Object[size];
+			StringBuilder builder = new StringBuilder("delete from ");
+			builder.append(clz.getSimpleName()).append(" where id in (");
+			for (int i = 0;i < values.length;i++) {
+				values[i++] = getPrimaryKey(deleteQueue.poll());
+				builder.append("?,");
+			}
+			builder.deleteCharAt(builder.length() - 1).append(")");
+			entityManager.deleteSync(builder.toString(), values);
 		}
-		builder.deleteCharAt(builder.length() - 1).append(")");
-		entityManager.deleteSync(builder.toString(), values);
 	}
 	
 	protected Object getPrimaryKey(V v) {
