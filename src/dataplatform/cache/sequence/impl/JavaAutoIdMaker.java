@@ -10,7 +10,15 @@ import dataplatform.cache.sequence.IInstanceIdMaker;
  */
 public class JavaAutoIdMaker implements IInstanceIdMaker {
 	
-	protected AtomicInteger id_gen = new AtomicInteger();
+	protected final AtomicInteger id_gen;
+	
+	public JavaAutoIdMaker() {
+		this(0);
+	}
+	
+	public JavaAutoIdMaker(int defaultValue) {
+		id_gen = new AtomicInteger(defaultValue);
+	}
 
 	@Override
 	public int nextInstanceId() {
