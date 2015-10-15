@@ -14,7 +14,7 @@ public class SimplePubsub implements ISimplePubsub {
 
 	@Override
 	public void publish(Object message) {
-		pubsub.post(message);;
+		pubsub.post(message);
 	}
 
 	@Override
