@@ -43,7 +43,7 @@ public class PersistHashCache<V extends IHashCachedObject> extends HashCache<V> 
 			StringBuilder builder = new StringBuilder("delete from ");
 			builder.append(clz.getSimpleName()).append(" where id in (");
 			for (int i = 0;i < values.length;i++) {
-				values[i++] = getPrimaryKey(deleteQueue.poll());
+				values[i] = getPrimaryKey(deleteQueue.poll());
 				builder.append("?,");
 			}
 			builder.deleteCharAt(builder.length() - 1).append(")");
