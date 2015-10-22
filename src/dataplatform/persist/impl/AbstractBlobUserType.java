@@ -5,12 +5,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hibernate.HibernateException;
 import org.hibernate.type.StandardBasicTypes;
 
 import dataplatform.persist.BlobUserType;
 
 public abstract class AbstractBlobUserType implements BlobUserType {
+	
+	protected static final Log log = LogFactory.getLog(AbstractBlobUserType.class);
 	
 	/**
 	 * 数据库中保存的数据类型
