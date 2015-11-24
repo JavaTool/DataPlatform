@@ -192,4 +192,34 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 		return cache.containsCacheKey(key);
 	}
 
+	@Override
+	public Object lHeadPop(String key) {
+		return cache.lHeadPop(key);
+	}
+
+	@Override
+	public void lTailPush(String key, Object... objects) {
+		cache.lTailPush(key, objects);
+	}
+
+	@Override
+	public Object lGet(String key, long index) {
+		return cache.lGet(key, index);
+	}
+
+	@Override
+	public long lLen(String key) {
+		return cache.lLen(key);
+	}
+
+	@Override
+	public void lTrim(String key, long start, long end) {
+		cache.lTrim(key, start, end);
+	}
+
+	@Override
+	public String[] keys(String pattern) {
+		return cache.keys(pattern);
+	}
+
 }

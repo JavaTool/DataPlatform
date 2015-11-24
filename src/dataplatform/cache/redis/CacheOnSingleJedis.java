@@ -8,18 +8,16 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.Jedis;
-
 import com.google.common.collect.Lists;
 
 import dataplatform.cache.IStreamCoder;
-import dataplatform.cache.sequence.ICounter;
+import redis.clients.jedis.Jedis;
 
 /**
  * Redis缓存器
  * @author 	fuhuiyuan
  */
-public class CacheOnSingleJedis extends CacheOnJedis implements ICounter {
+public class CacheOnSingleJedis extends CacheOnJedis {
 	
 	protected static final Logger log = LoggerFactory.getLogger(CacheOnSingleJedis.class);
 	
@@ -32,42 +30,6 @@ public class CacheOnSingleJedis extends CacheOnJedis implements ICounter {
 		host = new RedisHost(hostInfos[0], Integer.parseInt(hostInfos[1]));
 		jedis = new Jedis(host.getHost(), host.getPort());
 		log.info("Redis connect, {}.", jedis.toString());
-	}
-
-	@Override
-	public long getCount(String key) {
-		try {
-			String vaule = jedis.get(key);
-			return Long.parseLong(vaule == null ? "0" : vaule);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		}
-	}
-
-	@Override
-	public long incr(String key, long value) {
-		try {
-			return jedis.incrBy(key, value);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		}
-	}
-
-	@Override
-	public long decr(String key, long value) {
-		try {
-			return jedis.decrBy(key, value);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		}
-	}
-
-	@Override
-	public void deleteCount(String key) {
-		del(key);
 	}
 
 	@Override

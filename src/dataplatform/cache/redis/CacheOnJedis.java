@@ -9,8 +9,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.Jedis;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -20,6 +18,7 @@ import dataplatform.cache.ICache;
 import dataplatform.cache.ICacheUnit;
 import dataplatform.cache.IStreamCoder;
 import dataplatform.util.SerializaUtil;
+import redis.clients.jedis.Jedis;
 
 /**
  * Jedis缓存器
@@ -288,7 +287,7 @@ public abstract class CacheOnJedis implements ICache {
 
 	@Override
 	public void del(String key) {
-		delExecutor.exec(key, null, null, cacheUnits.get(key));
+		delExecutor.exec(key, null, null, cacheUnits.remove(key));
 	}
 	
 	protected void del(ICacheUnit cacheUnit) {
@@ -608,6 +607,151 @@ public abstract class CacheOnJedis implements ICache {
 	@Override
 	public boolean containsCacheKey(String key) {
 		return cacheUnits.containsKey(key);
+	}
+	
+	@Override
+	public Object lHeadPop(String key) {
+		ICacheUnit cacheUnit = cacheUnits.get(key);
+		Jedis jedis = getJedis();
+		try {
+			if (cacheUnit == null) {
+				return jedis.lpop(serializable(key));
+			} else {
+				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				if (streamCoder == null) {
+					return jedis.lpop(key);
+				} else {
+					return jedis.lpop(streamCoder.write(key));
+				}
+			}
+		} catch (Exception e) {
+			log.error("error on key " + key, e);
+			throw new RedisException(e);
+		} finally {
+			useFinish(jedis);
+		}
+	}
+	
+	@Override
+	public void lTailPush(String key, Object... objects) {
+		ICacheUnit cacheUnit = cacheUnits.get(key);
+		Jedis jedis = getJedis();
+		try {
+			if (cacheUnit == null) {
+				byte[][] bytes = new byte[objects.length][];
+				for (int i = 0;i < objects.length;i++) {
+					bytes[i] = CacheUnitFactory.defaultStreamCoder.write(objects[i]);
+				}
+				jedis.lpush(serializable(key), bytes);
+			} else {
+				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				if (streamCoder == null) {
+					String[] strings = new String[objects.length];
+					for (int i = 0;i < objects.length;i++) {
+						strings[i] = objects[i].toString();
+					}
+					jedis.lpush(key, strings);
+				} else {
+					byte[][] bytes = new byte[objects.length][];
+					for (int i = 0;i < objects.length;i++) {
+						bytes[i] = streamCoder.write(objects[i]);
+					}
+					jedis.lpush(serializable(key), bytes);
+				}
+			}
+		} catch (Exception e) {
+			log.error("error on key " + key, e);
+			throw new RedisException(e);
+		} finally {
+			useFinish(jedis);
+		}
+	}
+	
+	@Override
+	public Object lGet(String key, long index) {
+		ICacheUnit cacheUnit = cacheUnits.get(key);
+		Jedis jedis = getJedis();
+		try {
+			if (cacheUnit == null) {
+				return jedis.lindex(serializable(key), index);
+			} else {
+				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				if (streamCoder == null) {
+					return jedis.lindex(key, index);
+				} else {
+					return jedis.lindex(streamCoder.write(key), index);
+				}
+			}
+		} catch (Exception e) {
+			log.error("error on key " + key, e);
+			throw new RedisException(e);
+		} finally {
+			useFinish(jedis);
+		}
+	}
+	
+	@Override
+	public long lLen(String key) {
+		ICacheUnit cacheUnit = cacheUnits.get(key);
+		Jedis jedis = getJedis();
+		try {
+			if (cacheUnit == null) {
+				return jedis.llen(serializable(key));
+			} else {
+				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				if (streamCoder == null) {
+					return jedis.llen(key);
+				} else {
+					return jedis.llen(streamCoder.write(key));
+				}
+			}
+		} catch (Exception e) {
+			log.error("error on key " + key, e);
+			throw new RedisException(e);
+		} finally {
+			useFinish(jedis);
+		}
+	}
+	
+	@Override
+	public void lTrim(String key, long start, long end) {
+		ICacheUnit cacheUnit = cacheUnits.get(key);
+		Jedis jedis = getJedis();
+		try {
+			if (cacheUnit == null) {
+				jedis.ltrim(serializable(key), start, end);
+			} else {
+				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				if (streamCoder == null) {
+					jedis.ltrim(key, start, end);
+				} else {
+					jedis.ltrim(streamCoder.write(key), start, end);
+				}
+			}
+		} catch (Exception e) {
+			log.error("error on key " + key, e);
+			throw new RedisException(e);
+		} finally {
+			useFinish(jedis);
+		}
+	}
+	
+	@Override
+	public String[] keys(String pattern) {
+		Jedis jedis = getJedis();
+		try {
+			Set<String> stringSet = jedis.keys(pattern);
+			Set<byte[]> byteSet = jedis.keys(serializable(pattern));
+			for (byte[] bytes : byteSet) {
+				stringSet.add(deserializable(bytes).toString());
+			}
+			return stringSet.toArray(new String[stringSet.size()]);
+		} catch (Exception e) {
+			log.error("error on key " + pattern, e);
+			throw new RedisException(e);
+		} finally {
+			useFinish(jedis);
+		}
 	}
 
 }

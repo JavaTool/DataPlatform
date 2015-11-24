@@ -72,6 +72,10 @@ public class HashCache<V extends IHashCachedObject> {
 		delete(key, hashObject.getHashName());
 	}
 	
+	public void delete(String key, String... names) {
+		cache.hmDel(checkAndMakeKey(key), names);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public Map<String, V> getAll(String key, IForEach<V> foreach) {
 		Map<String, V> all = (Map<String, V>) cache.hGetAll(checkAndMakeKey(key));
@@ -93,7 +97,7 @@ public class HashCache<V extends IHashCachedObject> {
 		
 	}
 	
-	protected String makeKey(String key) {
+	public String makeKey(String key) {
 		return key == null || key.length() == 0 ? preKey : (preKey + "_" + key);
 	}
 	

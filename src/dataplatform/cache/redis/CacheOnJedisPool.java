@@ -6,17 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-
 import com.google.common.collect.Lists;
 
 import dataplatform.cache.ICacheUnit;
 import dataplatform.cache.IStreamCoder;
-import dataplatform.cache.sequence.ICounter;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
-public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
+public class CacheOnJedisPool extends CacheOnJedis {
 	
 	private final JedisPool pool;
 	
@@ -109,57 +107,6 @@ public class CacheOnJedisPool extends CacheOnJedis implements ICounter {
 	@Override
 	public Jedis getJedis() {
 		return pool.getResource();
-	}
-
-	@Override
-	public long getCount(String key) {
-		Jedis jedis = getJedis();
-		try {
-			String vaule = jedis.get(key);
-			return Long.parseLong(vaule == null ? "0" : vaule);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		} finally {
-			useFinish(jedis);
-		}
-	}
-
-	@Override
-	public long incr(String key, long value) {
-		if (!cacheUnits.containsKey(key)) {
-			cacheUnits.put(key, CacheUnitFactory.createCacheUnit(key, Long.class, true, null));
-		}
-		Jedis jedis = getJedis();
-		try {
-			return jedis.incrBy(key, value);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		} finally {
-			useFinish(jedis);
-		}
-	}
-
-	@Override
-	public long decr(String key, long value) {
-		if (!cacheUnits.containsKey(key)) {
-			cacheUnits.put(key, CacheUnitFactory.createCacheUnit(key, Long.class, true, null));
-		}
-		Jedis jedis = getJedis();
-		try {
-			return jedis.decrBy(key, value);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		} finally {
-			useFinish(jedis);
-		}
-	}
-
-	@Override
-	public void deleteCount(String key) {
-		del(key);
 	}
 
 	@Override

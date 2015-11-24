@@ -1,14 +1,11 @@
 package dataplatform.cache.sequence.impl;
 
-import java.io.Serializable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.Jedis;
 import dataplatform.cache.redis.CacheOnJedis;
 import dataplatform.cache.sequence.ICounter;
-import dataplatform.util.SerializaUtil;
+import redis.clients.jedis.Jedis;
 
 public class RedisCounter implements ICounter {
 	
@@ -24,39 +21,18 @@ public class RedisCounter implements ICounter {
 	public long getCount(String key) {
 		Jedis jedis = cache.getJedis();
 		try {
-			String vaule = (String) cache.get(key);
+			String vaule = (String) jedis.get(key);
 			return Long.parseLong(vaule == null ? "0" : vaule);
 		} finally {
 			cache.useFinish(jedis);
 		}
 	}
-	
-	/**
-	 * 序列化
-	 * @param 	object
-	 * 			被序列化的对象
-	 * @return	序列化结果
-	 * @throws 	Exception
-	 */
-	protected static byte[] serializable(String object) throws Exception {
-		return SerializaUtil.serializable(object);
-	}
-	
-	/**
-	 * 反序列化
-	 * @param 	datas
-	 * 			序列化内容
-	 * @return	反序列化的对象
-	 * @throws 	Exception
-	 */
-	protected static Serializable deserializable(byte[] datas) throws Exception {
-		return SerializaUtil.deserializable(datas);
-	}
 
 	@Override
-	public long incr(String key, long value) {
+	public long incr(String key, long value, long time) {
 		Jedis jedis = cache.getJedis();
 		try {
+			setTime(jedis, key, time);
 			return jedis.incrBy(key, value);
 		} catch (Exception e) {
 			log.error("", e);
@@ -65,11 +41,18 @@ public class RedisCounter implements ICounter {
 			cache.useFinish(jedis);
 		}
 	}
+	
+	protected void setTime(Jedis jedis, String key, long time) {
+		if (time != NO_TIME) {
+			jedis.pexpire(key, time);
+		}
+	}
 
 	@Override
-	public long decr(String key, long value) {
+	public long decr(String key, long value, long time) {
 		Jedis jedis = cache.getJedis();
 		try {
+			setTime(jedis, key, time);
 			return jedis.decrBy(key, value);
 		} catch (Exception e) {
 			log.error("", e);
@@ -82,6 +65,41 @@ public class RedisCounter implements ICounter {
 	@Override
 	public void deleteCount(String key) {
 		cache.del(key);
+	}
+
+	@Override
+	public long getCount(String key, String name) {
+		Jedis jedis = cache.getJedis();
+		try {
+			String vaule = (String) jedis.hget(key, name);
+			return Long.parseLong(vaule == null ? "0" : vaule);
+		} finally {
+			cache.useFinish(jedis);
+		}
+	}
+
+	@Override
+	public long incr(String key, String name, long value, long time) {
+		Jedis jedis = cache.getJedis();
+		try {
+			setTime(jedis, key, time);
+			return jedis.hincrBy(key, name, value);
+		} catch (Exception e) {
+			log.error("", e);
+			return 0L;
+		} finally {
+			cache.useFinish(jedis);
+		}
+	}
+
+	@Override
+	public long decr(String key, String name, long value, long time) {
+		return incr(key, name, -value, time);
+	}
+
+	@Override
+	public void deleteCount(String key, String name) {
+		cache.hdel(key, name);
 	}
 
 }
