@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 
+import dataplatform.coder.bytes.IBytesCoder;
 import dataplatform.persist.IEntityManager;
 
 /**
@@ -33,7 +34,7 @@ public abstract class PersistenceCache extends AbstractScheduledService implemen
 	}
 
 	@Override
-	public void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+	public void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IBytesCoder streamCoder) {
 		cache.registerCache(key, valueClass, delAtShutdown, streamCoder);
 	}
 

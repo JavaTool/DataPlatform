@@ -1,5 +1,7 @@
 package dataplatform.cache;
 
+import dataplatform.coder.bytes.IBytesCoder;
+
 public interface ICacheUnit {
 	
 	String getKey();
@@ -7,7 +9,7 @@ public interface ICacheUnit {
 	@SuppressWarnings("rawtypes")
 	Class getValueClass();
 	
-	IStreamCoder getStreamCoder();
+	IBytesCoder getStreamCoder();
 	
 	boolean delAtShutdown();
 

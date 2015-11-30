@@ -16,7 +16,7 @@ import com.google.common.collect.Sets;
 
 import dataplatform.cache.ICache;
 import dataplatform.cache.ICacheUnit;
-import dataplatform.cache.IStreamCoder;
+import dataplatform.coder.bytes.IBytesCoder;
 import dataplatform.util.SerializaUtil;
 import redis.clients.jedis.Jedis;
 
@@ -101,7 +101,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) throws Exception {
 			return jedis.exists(key);
 		}
 
@@ -111,7 +111,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			return jedis.hexists(key, names[0]);
 		}
 		
@@ -133,7 +133,7 @@ public abstract class CacheOnJedis implements ICache {
 		public Object exec(String key, String name, Object object, ICacheUnit cacheUnit) {
 			Jedis jedis = getJedis();
 			try {
-				IStreamCoder streamCoder;
+				IBytesCoder streamCoder;
 				if (cacheUnit == null) {
 					streamCoder = CacheUnitFactory.defaultStreamCoder;
 				} else {
@@ -160,7 +160,7 @@ public abstract class CacheOnJedis implements ICache {
 		public Object exec(String key, Map<String, Object> map, ICacheUnit cacheUnit, Collection<Object> collection, String... names) {
 			Jedis jedis = getJedis();
 			try {
-				IStreamCoder streamCoder = cacheUnit == null ? CacheUnitFactory.defaultStreamCoder : cacheUnit.getStreamCoder();
+				IBytesCoder streamCoder = cacheUnit == null ? CacheUnitFactory.defaultStreamCoder : cacheUnit.getStreamCoder();
 				
 				if (streamCoder == null) {
 					Map<String, String> stringMap = map == null ? null : (stringMap = Maps.newHashMap());
@@ -213,11 +213,11 @@ public abstract class CacheOnJedis implements ICache {
 
 		protected abstract Object execReids(Jedis jedis, String key, String name, String object) throws Exception;
 		
-		protected abstract Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception;
+		protected abstract Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) throws Exception;
 
 		protected abstract Object execReids(Jedis jedis, String key, Map<String, String> map, Collection<Object> collection, String... names) throws Exception;
 		
-		protected abstract Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception;
+		protected abstract Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception;
 		
 	}
 	
@@ -229,7 +229,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) {
 			return jedis.set(key, object);
 		}
 
@@ -242,7 +242,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) {
 			for (byte[] k : map.keySet()) {
 				execReids(jedis, k, null, map.get(k), streamCoder);
 			}
@@ -264,7 +264,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) {
 			return jedis.hset(key, name, object);
 		}
 
@@ -274,7 +274,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) {
 			return jedis.hmset(key, map);
 		}
 		
@@ -302,7 +302,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) {
 			return jedis.del(key);
 		}
 
@@ -315,7 +315,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) {
 			for (byte[] k : names) {
 				execReids(jedis, k, null, null, streamCoder);
 			}
@@ -337,7 +337,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) throws Exception {
 			return streamCoder.read(jedis.get(key));
 		}
 
@@ -350,7 +350,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			for (byte[] k : names) {
 				collection.add(execReids(jedis, k, null, null, streamCoder));
 			}
@@ -372,7 +372,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) throws Exception {
 			return streamCoder.read(jedis.hget(key, name));
 		}
 
@@ -383,7 +383,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			for (byte[] datas : jedis.hmget(key, names)) {
 				collection.add(streamCoder.read(datas));
 			}
@@ -412,7 +412,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) throws Exception {
 			return jedis.hdel(key, name);
 		}
 
@@ -422,7 +422,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			return names.length > 0 ? jedis.hdel(key, names) : 0L;
 		}
 		
@@ -446,7 +446,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) throws Exception {
 			return jedis.hlen(key);
 		}
 
@@ -457,7 +457,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			map.putAll(jedis.hgetAll(key));
 			return null;
 		}
@@ -486,7 +486,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) throws Exception {
 			return execReids(getJedis(), deserializable(key).toString(), null, null);
 		}
 
@@ -496,7 +496,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			for (byte[] k : jedis.hkeys(key)) {
 				collection.add(streamCoder.read(k));
 			}
@@ -536,7 +536,7 @@ public abstract class CacheOnJedis implements ICache {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IStreamCoder streamCoder) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, byte[] name, byte[] object, IBytesCoder streamCoder) throws Exception {
 			return jedis.type(key);
 		}
 
@@ -548,7 +548,7 @@ public abstract class CacheOnJedis implements ICache {
 
 		@Deprecated
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			return null;
 		}
 		
@@ -577,7 +577,7 @@ public abstract class CacheOnJedis implements ICache {
 	}
 	
 	@Override
-	public void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+	public void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IBytesCoder streamCoder) {
 		Preconditions.checkArgument(!containsCacheKey(key), "Repeat cache key[{}].", key);
 		cacheUnits.put(key, CacheUnitFactory.createCacheUnit(key, valueClass, delAtShutdown, streamCoder));
 		log.info("Cache unit key : {}.", key);
@@ -617,7 +617,7 @@ public abstract class CacheOnJedis implements ICache {
 			if (cacheUnit == null) {
 				return jedis.lpop(serializable(key));
 			} else {
-				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				IBytesCoder streamCoder = cacheUnit.getStreamCoder();
 				if (streamCoder == null) {
 					return jedis.lpop(key);
 				} else {
@@ -644,7 +644,7 @@ public abstract class CacheOnJedis implements ICache {
 				}
 				jedis.lpush(serializable(key), bytes);
 			} else {
-				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				IBytesCoder streamCoder = cacheUnit.getStreamCoder();
 				if (streamCoder == null) {
 					String[] strings = new String[objects.length];
 					for (int i = 0;i < objects.length;i++) {
@@ -675,7 +675,7 @@ public abstract class CacheOnJedis implements ICache {
 			if (cacheUnit == null) {
 				return jedis.lindex(serializable(key), index);
 			} else {
-				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				IBytesCoder streamCoder = cacheUnit.getStreamCoder();
 				if (streamCoder == null) {
 					return jedis.lindex(key, index);
 				} else {
@@ -698,7 +698,7 @@ public abstract class CacheOnJedis implements ICache {
 			if (cacheUnit == null) {
 				return jedis.llen(serializable(key));
 			} else {
-				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				IBytesCoder streamCoder = cacheUnit.getStreamCoder();
 				if (streamCoder == null) {
 					return jedis.llen(key);
 				} else {
@@ -721,7 +721,7 @@ public abstract class CacheOnJedis implements ICache {
 			if (cacheUnit == null) {
 				jedis.ltrim(serializable(key), start, end);
 			} else {
-				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				IBytesCoder streamCoder = cacheUnit.getStreamCoder();
 				if (streamCoder == null) {
 					jedis.ltrim(key, start, end);
 				} else {

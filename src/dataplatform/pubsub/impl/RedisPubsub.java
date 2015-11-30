@@ -6,21 +6,20 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.BinaryJedisPubSub;
-import redis.clients.jedis.Jedis;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import dataplatform.cache.IStreamCoder;
 import dataplatform.cache.redis.CacheOnJedis;
-import dataplatform.cache.redis.SerialableCoder;
+import dataplatform.coder.bytes.ByteCoders;
+import dataplatform.coder.bytes.IBytesCoder;
 import dataplatform.pubsub.IPubsub;
 import dataplatform.pubsub.ISubscribe;
 import dataplatform.util.SerializaUtil;
+import redis.clients.jedis.BinaryJedisPubSub;
+import redis.clients.jedis.Jedis;
 
 public class RedisPubsub implements IPubsub {
 	
@@ -30,13 +29,13 @@ public class RedisPubsub implements IPubsub {
 	
 	private final CacheOnJedis cache;
 	
-	private final IStreamCoder coder;
+	private final IBytesCoder coder;
 	
 	private final Map<ISubscribe, ListenableFuture<SubscribeThread>> subscribes;
 	
 	private final ListeningExecutorService listeningExecutorService;
 	
-	public RedisPubsub(CacheOnJedis cache, IStreamCoder coder) {
+	public RedisPubsub(CacheOnJedis cache, IBytesCoder coder) {
 		this.cache = cache;
 		this.coder = coder;
 		listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_COUNT));
@@ -44,7 +43,7 @@ public class RedisPubsub implements IPubsub {
 	}
 	
 	public RedisPubsub(CacheOnJedis cache) {
-		this(cache, new SerialableCoder());
+		this(cache, ByteCoders.newSerialableCoder());
 	}
 
 	@Override

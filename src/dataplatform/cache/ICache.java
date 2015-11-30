@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import dataplatform.coder.bytes.IBytesCoder;
+
 /**
  * 缓存器
  * @author 	fuhuiyuan
@@ -40,7 +42,7 @@ public interface ICache {
 	 * @param 	streamCoder
 	 * 			流编码器
 	 */
-	void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder);
+	void registerCache(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IBytesCoder streamCoder);
 	/**
 	 * 是否已经注册过缓存键
 	 * @param 	key

@@ -1,13 +1,14 @@
-package dataplatform.pubsub.impl;
+package dataplatform.coder.bytes;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
-import dataplatform.cache.IStreamCoder;
+import dataplatform.pubsub.impl.ByteArrayMessage;
+import dataplatform.pubsub.impl.IByteArrayMessage;
 
-public class ByteArrayCoder implements IStreamCoder {
+class ByteArrayCoder implements IBytesCoder {
 
 	@Override
 	public byte[] write(Object value) throws Exception {

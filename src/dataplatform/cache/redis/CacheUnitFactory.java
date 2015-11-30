@@ -1,11 +1,12 @@
 package dataplatform.cache.redis;
 
 import dataplatform.cache.ICacheUnit;
-import dataplatform.cache.IStreamCoder;
+import dataplatform.coder.bytes.ByteCoders;
+import dataplatform.coder.bytes.IBytesCoder;
 
 class CacheUnitFactory {
 	
-	static final IStreamCoder defaultStreamCoder = new SerialableCoder();
+	static final IBytesCoder defaultStreamCoder = ByteCoders.newSerialableCoder();
 	
 	@SuppressWarnings("rawtypes")
 	private static final Class[] STRING_CLASSES = new Class[]{
@@ -14,13 +15,13 @@ class CacheUnitFactory {
 	
 	private CacheUnitFactory() {}
 	
-	public static ICacheUnit createCacheUnit(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+	public static ICacheUnit createCacheUnit(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IBytesCoder streamCoder) {
 		streamCoder = streamCoder == null ? createStreamCoder(valueClass) : streamCoder;
 		return new CacheUnit(key, valueClass, delAtShutdown, streamCoder);
 	}
 	
 	@SuppressWarnings("rawtypes")
-	private static IStreamCoder createStreamCoder(Class valueClass) {
+	private static IBytesCoder createStreamCoder(Class valueClass) {
 		for (Class cls : STRING_CLASSES) {
 			if (cls.equals(valueClass)) {
 				return null;
@@ -38,9 +39,9 @@ class CacheUnitFactory {
 		
 		private boolean delAtShutdown;
 		
-		private IStreamCoder streamCoder;
+		private IBytesCoder streamCoder;
 		
-		public CacheUnit(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IStreamCoder streamCoder) {
+		public CacheUnit(String key, @SuppressWarnings("rawtypes") Class valueClass, boolean delAtShutdown, IBytesCoder streamCoder) {
 			this.key = key;
 			this.valueClass = valueClass;
 			this.delAtShutdown = delAtShutdown;
@@ -59,7 +60,7 @@ class CacheUnitFactory {
 		}
 
 		@Override
-		public IStreamCoder getStreamCoder() {
+		public IBytesCoder getStreamCoder() {
 			return streamCoder;
 		}
 

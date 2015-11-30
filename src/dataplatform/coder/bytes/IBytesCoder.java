@@ -1,6 +1,6 @@
-package dataplatform.cache;
+package dataplatform.coder.bytes;
 
-public interface IStreamCoder {
+public interface IBytesCoder {
 	
 	byte[] write(Object value) throws Exception;
 	

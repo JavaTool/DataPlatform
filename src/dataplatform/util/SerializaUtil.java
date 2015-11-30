@@ -14,7 +14,9 @@ import com.google.common.collect.Lists;
  * 序列化工具
  * @author 	fuhuiyuan
  */
-public class SerializaUtil {
+public final class SerializaUtil {
+	
+	private SerializaUtil() {}
 	
 	/**
 	 * 序列化

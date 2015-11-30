@@ -1,11 +1,10 @@
-package dataplatform.cache.redis;
+package dataplatform.coder.bytes;
 
 import java.io.Serializable;
 
-import dataplatform.cache.IStreamCoder;
 import dataplatform.util.SerializaUtil;
 
-public class SerialableCoder implements IStreamCoder {
+class SerialableCoder implements IBytesCoder {
 
 	@Override
 	public byte[] write(Object value) throws Exception {

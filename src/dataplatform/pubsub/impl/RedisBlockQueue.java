@@ -7,21 +7,20 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.Jedis;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import dataplatform.cache.IStreamCoder;
 import dataplatform.cache.redis.CacheOnJedis;
 import dataplatform.cache.redis.CacheOnJedisPool;
-import dataplatform.cache.redis.SerialableCoder;
+import dataplatform.coder.bytes.ByteCoders;
+import dataplatform.coder.bytes.IBytesCoder;
 import dataplatform.pubsub.IPubsub;
 import dataplatform.pubsub.ISubscribe;
 import dataplatform.util.SerializaUtil;
+import redis.clients.jedis.Jedis;
 
 public class RedisBlockQueue implements IPubsub {
 	
@@ -31,13 +30,13 @@ public class RedisBlockQueue implements IPubsub {
 	
 	private final CacheOnJedis cache;
 	
-	private final IStreamCoder coder;
+	private final IBytesCoder coder;
 	
 	private final Map<ISubscribe, ListenableFuture<SubscribeThread>> subscribes;
 	
 	private final ListeningExecutorService listeningExecutorService;
 	
-	public RedisBlockQueue(CacheOnJedis cache, IStreamCoder coder) {
+	public RedisBlockQueue(CacheOnJedis cache, IBytesCoder coder) {
 		this.cache = cache;
 		this.coder = coder;
 		listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_COUNT));
@@ -45,7 +44,7 @@ public class RedisBlockQueue implements IPubsub {
 	}
 	
 	public RedisBlockQueue(CacheOnJedis cache) {
-		this(cache, new SerialableCoder());
+		this(cache, ByteCoders.newSerialableCoder());
 	}
 
 	@Override
@@ -125,7 +124,7 @@ public class RedisBlockQueue implements IPubsub {
 	
 	public static void main(String[] args) {
 		CacheOnJedis cache = new CacheOnJedisPool("localhost:6379", 100, 100, 100000L);
-		IStreamCoder coder = new SerialableCoder();
+		IBytesCoder coder = ByteCoders.newSerialableCoder();
 		IPubsub pubsub = new RedisBlockQueue(cache, coder);
 		String channel = "TestSubscribe";
 		String[] channels = new String[5];

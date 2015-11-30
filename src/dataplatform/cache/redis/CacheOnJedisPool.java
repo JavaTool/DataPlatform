@@ -9,7 +9,7 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 
 import dataplatform.cache.ICacheUnit;
-import dataplatform.cache.IStreamCoder;
+import dataplatform.coder.bytes.IBytesCoder;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -44,7 +44,7 @@ public class CacheOnJedisPool extends CacheOnJedis {
 				}
 				jedis.mset(array);
 			} else {
-				IStreamCoder streamCoder = cacheUnit.getStreamCoder();
+				IBytesCoder streamCoder = cacheUnit.getStreamCoder();
 				byte[][] array = new byte[mapSize << 1][];
 				for (int i = 0;i < keys.length;i++) {
 					array[i << 1] = serializable(keys[i]);
@@ -79,7 +79,7 @@ public class CacheOnJedisPool extends CacheOnJedis {
 		}
 
 		@Override
-		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Serializable execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			for (byte[] datas : jedis.mget(names)) {
 				collection.add(streamCoder.read(datas));
 			}

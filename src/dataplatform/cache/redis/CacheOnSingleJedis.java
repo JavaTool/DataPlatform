@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
-import dataplatform.cache.IStreamCoder;
+import dataplatform.coder.bytes.IBytesCoder;
 import redis.clients.jedis.Jedis;
 
 /**
@@ -52,7 +52,7 @@ public class CacheOnSingleJedis extends CacheOnJedis {
 		}
 
 		@Override
-		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IStreamCoder streamCoder, byte[]... names) throws Exception {
+		protected Object execReids(Jedis jedis, byte[] key, Map<byte[], byte[]> map, Collection<Object> collection, IBytesCoder streamCoder, byte[]... names) throws Exception {
 			for (byte[] datas : jedis.mget(names)) {
 				collection.add((Serializable) streamCoder.read(datas));
 			}
