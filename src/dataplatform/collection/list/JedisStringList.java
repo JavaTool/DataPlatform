@@ -8,12 +8,15 @@ import java.util.ListIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
+
 import dataplatform.cache.redis.IJedisSource;
 import dataplatform.util.ArrayUtil;
 import dataplatform.util.ClassUtil;
+import redis.clients.jedis.BinaryClient.LIST_POSITION;
 import redis.clients.jedis.Jedis;
 
-class JedisStringList<E> implements List<E> {
+class JedisStringList implements List<String> {
 	
 	protected static final Logger log = LoggerFactory.getLogger(JedisStringList.class);
 	
@@ -64,10 +67,34 @@ class JedisStringList<E> implements List<E> {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public Iterator<E> iterator() {
-		return (Iterator<E>) this;
+	public Iterator<String> iterator() {
+		return new JedisIterator();
+	}
+	
+	private class JedisIterator implements Iterator<String> {
+		
+		private int cursor;
+		
+		private final Object[] values;
+		
+		public JedisIterator() {
+			cursor = 0;
+			values = toArray();
+		}
+
+		@Override
+		public boolean hasNext() {
+			return cursor < values.length;
+		}
+
+		@Override
+		public String next() {
+			String value = (String) values[cursor];
+			cursor--;
+			return value;
+		}
+		
 	}
 
 	@Override
@@ -115,7 +142,7 @@ class JedisStringList<E> implements List<E> {
 	}
 
 	@Override
-	public boolean add(E e) {
+	public boolean add(String e) {
 		Jedis jedis = source.getJedis();
 		try {
 			jedis.lpush(key, e.toString());
@@ -152,11 +179,10 @@ class JedisStringList<E> implements List<E> {
 		return true;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean addAll(Collection<? extends E> c) {
+	public boolean addAll(Collection<? extends String> c) {
 		for (Object e : c) {
-			if (!add((E) e)) {
+			if (!add(e.toString())) {
 				return false;
 			}
 		}
@@ -164,51 +190,102 @@ class JedisStringList<E> implements List<E> {
 	}
 
 	@Override
-	public boolean addAll(int index, Collection<? extends E> c) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean addAll(int index, Collection<? extends String> c) {
+		for (Object e : c) {
+			set(index++, e.toString());
+		}
+		return true;
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		// TODO Auto-generated method stub
-		return false;
+		for (Object e : c) {
+			if (!remove(e)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		// TODO Auto-generated method stub
-		return false;
+		List<String> list = Lists.newArrayListWithCapacity(c.size());
+		c.forEach((e) -> {
+			if (contains(e)) {
+				list.add(e.toString());
+			}
+		});
+		clear();
+		addAll(list);
+		return true;
 	}
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
-		
+		Jedis jedis = source.getJedis();
+		try {
+			if ("list".equals(jedis.type(key))) {
+				jedis.del(key);
+			}
+		} catch (Exception e) {
+			log.error("Error on RedisMap key : " + key, e);
+		} finally {
+			source.useFinish(jedis);
+		}
 	}
 
 	@Override
-	public E get(int index) {
-		// TODO Auto-generated method stub
-		return null;
+	public String get(int index) {
+		Jedis jedis = source.getJedis();
+		try {
+			return jedis.lindex(key, index);
+		} catch (Exception e) {
+			log.error("Error on RedisMap key : " + key, e);
+			return null;
+		} finally {
+			source.useFinish(jedis);
+		}
 	}
 
 	@Override
-	public E set(int index, E element) {
-		// TODO Auto-generated method stub
-		return null;
+	public String set(int index, String element) {
+		Jedis jedis = source.getJedis();
+		try {
+			add(index, element);
+			return get(index + 1);
+		} catch (Exception e) {
+			log.error("Error on RedisMap key : " + key, e);
+			return null;
+		} finally {
+			source.useFinish(jedis);
+		}
 	}
 
 	@Override
-	public void add(int index, E element) {
-		// TODO Auto-generated method stub
-		
+	public void add(int index, String element) {
+		Jedis jedis = source.getJedis();
+		try {
+			jedis.linsert(key, LIST_POSITION.BEFORE, get(index), element);
+		} catch (Exception e) {
+			log.error("Error on RedisMap key : " + key, e);
+		} finally {
+			source.useFinish(jedis);
+		}
 	}
 
 	@Override
-	public E remove(int index) {
-		// TODO Auto-generated method stub
-		return null;
+	public String remove(int index) {
+		Jedis jedis = source.getJedis();
+		try {
+			String element = jedis.lindex(key, index);
+			jedis.lrem(element, index, element);
+			return element;
+		} catch (Exception e) {
+			log.error("Error on RedisMap key : " + key, e);
+			return null;
+		} finally {
+			source.useFinish(jedis);
+		}
 	}
 
 	@Override
@@ -224,19 +301,19 @@ class JedisStringList<E> implements List<E> {
 	}
 
 	@Override
-	public ListIterator<E> listIterator() {
+	public ListIterator<String> listIterator() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public ListIterator<E> listIterator(int index) {
+	public ListIterator<String> listIterator(int index) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<E> subList(int fromIndex, int toIndex) {
+	public List<String> subList(int fromIndex, int toIndex) {
 		// TODO Auto-generated method stub
 		return null;
 	}
