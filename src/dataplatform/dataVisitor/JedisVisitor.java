@@ -113,10 +113,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 		} else {
 			if (conditionKey instanceof String[]) {
 				String[] keys = (String[]) conditionKey;
-				byte[][] keyBytes = new byte[keys.length][];
-				for (int i = 0;i < keys.length;i++) {
-					keyBytes[i] = stringToBytes(keys[i]);
-				}
+				byte[][] keyBytes = stringsToBytes(keys);
 				jedis.mget(keyBytes).forEach((value) -> {
 					try {
 						list.add((T) BYTES_CODES.read(value));
@@ -137,15 +134,13 @@ public abstract class JedisVisitor implements IDataVisitor {
 					}
 				});
 			} else {
-				byte[][] nameBytes = new byte[names.length][];
-				for (int i = 0;i < names.length;i++) {
-					nameBytes[i] = stringToBytes(names[i]);
-				}
+				byte[][] nameBytes = stringsToBytes(names);
 				jedis.hmget(stringToBytes(conditionKey.toString()), nameBytes).forEach((value) -> {
 					try {
 						list.add((T) BYTES_CODES.read(value));
 					} catch (Exception e) {
 						StringBuilder builder = new StringBuilder("JedisVisitor hmget error on key : ");
+						builder.append(conditionKey).append(" / ");
 						for (String name : names) {
 							builder.append(name).append(" ; ");
 						}
@@ -159,6 +154,14 @@ public abstract class JedisVisitor implements IDataVisitor {
 	
 	private static byte[] stringToBytes(String str) {
 		return str.getBytes();
+	}
+	
+	private static byte[][] stringsToBytes(String[] strs) {
+		byte[][] bytes = new byte[strs.length][];
+		for (int i = 0;i < strs.length;i++) {
+			bytes[i] = stringToBytes(strs[i]);
+		}
+		return bytes;
 	}
 
 	@Override
@@ -213,37 +216,86 @@ public abstract class JedisVisitor implements IDataVisitor {
 	public <T> void save(T[] entity, EntityType entityType, Map<String, Object> conditions) {
 		if (entity.length > 0) {
 			Jedis jedis = getJedis();
-			String key = (String) Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
+			Object conditionKey = Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
 			Object conditionNames = conditions.get(CONDITION_NAME);
 			if (isString(entity[0].getClass())) {
-				if (conditionNames == null) {
-					throw new RuntimeException(MessageFormat.format("JedisVisitor save error on key : {}", key));
-				} else {
-					Map<String, String> map = Maps.newHashMap();
-					String[] names = (String[]) conditionNames;
-					for (int i = 0;i < entity.length;i++) {
-						map.put(names[i], entity[i].toString());
+				if (conditionKey instanceof String[]) {
+					String[] keys = (String[]) conditionKey;
+					int length = entity.length;
+					String[] keysvalues = new String[length << 1];
+					for (int i = 0;i < length;i++) {
+						keysvalues[i] = keys[i];
+						keysvalues[i + length] = entity[i].toString();
 					}
-					jedis.hmset(key, map);
+					jedis.mset(keysvalues);
+				} else if (conditionKey instanceof String) {
+					if (conditionNames instanceof String[]) {
+						Map<String, String> map = Maps.newHashMap();
+						String[] names = (String[]) conditionNames;
+						for (int i = 0;i < entity.length;i++) {
+							map.put(names[i], entity[i].toString());
+						}
+						jedis.hmset(conditionKey.toString(), map);
+					} else {
+						throw new RuntimeException(MessageFormat.format("JedisVisitor save error on key : {}", conditionKey));
+					}
+				} else {
+					throw new RuntimeException(MessageFormat.format("JedisVisitor save error on key : {}", conditionKey));
 				}
 			} else {
-//				try {
-//					if (name == null || name.length() == 0) {
-//						jedis.set(stringToBytes(key), BYTES_CODES.write(entity));
-//					} else {
-//						jedis.hset(stringToBytes(key), stringToBytes(name), BYTES_CODES.write(entity));
-//					}
-//				} catch (Exception e) {
-//					throw new RuntimeException(MessageFormat.format("JedisVisitor get error on key / name : {} / {} ", key, name));
-//				}
+				try {
+					if (conditionKey instanceof String[]) {
+						String[] keys = (String[]) conditionKey;
+						int length = entity.length;
+						byte[][] keysvalues = new byte[length << 1][];
+						for (int i = 0;i < length;i++) {
+							keysvalues[i] = stringToBytes(keys[i]);
+							keysvalues[i + length] = BYTES_CODES.write(entity[i]);
+						}
+						jedis.mset(keysvalues);
+					} else if (conditionKey instanceof String) {
+						if (conditionNames instanceof String[]) {
+							Map<byte[], byte[]> map = Maps.newHashMap();
+							String[] names = (String[]) conditionNames;
+							for (int i = 0;i < entity.length;i++) {
+								map.put(stringToBytes(names[i]), BYTES_CODES.write(entity[i]));
+							}
+							jedis.hmset(stringToBytes(conditionKey.toString()), map);
+						} else {
+							throw new RuntimeException(MessageFormat.format("JedisVisitor save error on key : {}", conditionKey));
+						}
+					} else {
+						throw new RuntimeException(MessageFormat.format("JedisVisitor save error on key : {}", conditionKey));
+					}
+				} catch (Exception e) {
+					throw new RuntimeException(MessageFormat.format("JedisVisitor mset/hmset error on key / name : {} / {} ", conditionKey, conditionNames));
+				}
 			}
 		}
 	}
 
 	@Override
 	public <T> void delete(T[] entity, EntityType entityType, Map<String, Object> conditions) {
-		if (entity.length > 0) {
-			
+		Object conditionKey = Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
+		Object conditionNames = conditions.get(CONDITION_NAME);
+		if (conditionKey instanceof String[]) {
+			String[] keys = (String[]) conditionKey;
+			Map<String, Object> map = Maps.newHashMap();
+			for (int i = 0;i < entity.length;i++) {
+				map.put(CONDITION_KEY, keys[i]);
+				delete(entity[i], entityType, map);
+				map.clear();
+			}
+		} else {
+			String key = conditionKey.toString();
+			String[] names = (String[]) conditionNames;
+			Map<String, Object> map = Maps.newHashMap();
+			for (int i = 0;i < entity.length;i++) {
+				map.put(CONDITION_KEY, key);
+				map.put(CONDITION_NAME, names[i]);
+				delete(entity[i], entityType, map);
+				map.clear();
+			}
 		}
 	}
 
