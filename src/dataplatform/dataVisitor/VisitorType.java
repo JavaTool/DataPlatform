@@ -1,6 +1,6 @@
 package dataplatform.dataVisitor;
 
-public enum EntityType {
+public enum VisitorType {
 	
 	LOAD, 
 	

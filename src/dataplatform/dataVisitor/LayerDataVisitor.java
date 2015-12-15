@@ -14,12 +14,12 @@ public class LayerDataVisitor implements ILayerDataVisitor {
 	}
 
 	@Override
-	public <T> T get(Class<T> clz, EntityType entityType, Map<String, Object> conditions) {
+	public <T> T get(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
 		T value = null;
-		switch (entityType) {
+		switch (visitorType) {
 		case LOAD : 
 			for (IDataVisitor dataVisitor : layerVisitors) {
-				if ((value = dataVisitor.get(clz, entityType, conditions)) != null) {
+				if ((value = dataVisitor.get(clz, visitorType, conditions)) != null) {
 					break;
 				}
 			}
@@ -27,26 +27,26 @@ public class LayerDataVisitor implements ILayerDataVisitor {
 		case LOAD_CACHE : 
 			for (int i = 0;i < layerVisitors.size();i++) {
 				IDataVisitor dataVisitor = layerVisitors.get(i);
-				if ((value = dataVisitor.get(clz, entityType, conditions)) != null) {
+				if ((value = dataVisitor.get(clz, visitorType, conditions)) != null) {
 					for (int j = 0;j < i;j++) {
-						layerVisitors.get(j).save(value, entityType, conditions);
+						layerVisitors.get(j).save(value, visitorType, conditions);
 					}
 					break;
 				}
 			}
 			return value;
 		default : 
-			return layerVisitors.get(0).get(clz, entityType, conditions);
+			return layerVisitors.get(0).get(clz, visitorType, conditions);
 		}
 	}
 
 	@Override
-	public <T> List<T> getList(Class<T> clz, EntityType entityType, Map<String, Object> conditions) {
+	public <T> List<T> getList(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
 		List<T> list = null;
-		switch (entityType) {
+		switch (visitorType) {
 		case LOAD : 
 			for (IDataVisitor dataVisitor : layerVisitors) {
-				if ((list = dataVisitor.getList(clz, entityType, conditions)) != null) {
+				if ((list = dataVisitor.getList(clz, visitorType, conditions)) != null) {
 					return list;
 				}
 			}
@@ -54,39 +54,39 @@ public class LayerDataVisitor implements ILayerDataVisitor {
 		case LOAD_CACHE : 
 			for (int i = 0;i < layerVisitors.size();i++) {
 				IDataVisitor dataVisitor = layerVisitors.get(i);
-				if ((list = dataVisitor.getList(clz, entityType, conditions)) != null) {
+				if ((list = dataVisitor.getList(clz, visitorType, conditions)) != null) {
 					for (int j = 0;j < i;j++) {
-						layerVisitors.get(j).save(list.toArray(), entityType, conditions);
+						layerVisitors.get(j).save(list.toArray(), visitorType, conditions);
 					}
 					return list;
 				}
 			}
 			return Lists.newArrayList();
 		default : 
-			return layerVisitors.get(0).getList(clz, entityType, conditions);
+			return layerVisitors.get(0).getList(clz, visitorType, conditions);
 		}
 	}
 
 	@Override
-	public <T> void save(T entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void save(T entity, VisitorType visitorType, Map<String, Object> conditions) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public <T> void delete(T entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void delete(T entity, VisitorType visitorType, Map<String, Object> conditions) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public <T> void save(T[] entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void save(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public <T> void delete(T[] entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void delete(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
 		// TODO Auto-generated method stub
 
 	}

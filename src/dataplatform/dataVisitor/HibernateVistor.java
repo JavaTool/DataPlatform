@@ -83,7 +83,7 @@ public final class HibernateVistor implements IDataVisitor {
 		return builder.toString();
 	}
 	
-	private <T> String getEntityName(Class<T> clz, EntityType entityType) {
+	private <T> String getEntityName(Class<T> clz, VisitorType visitorType) {
 		return clz.getName();
 	}
 	
@@ -97,8 +97,8 @@ public final class HibernateVistor implements IDataVisitor {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T get(Class<T> clz, EntityType entityType, Map<String, Object> conditions) {
-		String entityName = getEntityName(clz, entityType);
+	public <T> T get(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
+		String entityName = getEntityName(clz, visitorType);
 		Lock lock = getLock(entityName);
 		lock.lock();
 		try {
@@ -124,9 +124,9 @@ public final class HibernateVistor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void save(T entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void save(T entity, VisitorType visitorType, Map<String, Object> conditions) {
 		checkCreateObject(entity);
-		String entityName = getEntityName(entity.getClass(), entityType);
+		String entityName = getEntityName(entity.getClass(), visitorType);
 		Lock lock = getLock(entityName);
 		lock.lock();
 		try {
@@ -149,8 +149,8 @@ public final class HibernateVistor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void delete(T entity, EntityType entityType, Map<String, Object> conditions) {
-		String entityName = getEntityName(entity.getClass(), entityType);
+	public <T> void delete(T entity, VisitorType visitorType, Map<String, Object> conditions) {
+		String entityName = getEntityName(entity.getClass(), visitorType);
 		Session session = getSession();
 		Transaction tx = session.beginTransaction();
 		try {
@@ -164,8 +164,8 @@ public final class HibernateVistor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> List<T> getList(Class<T> clz, EntityType entityType, Map<String, Object> conditions) {
-		String entityName = getEntityName(clz, entityType);
+	public <T> List<T> getList(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
+		String entityName = getEntityName(clz, visitorType);
 		Lock lock = getLock(entityName);
 		lock.lock();
 		try{
@@ -192,19 +192,19 @@ public final class HibernateVistor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void save(T[] entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void save(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
 		for (T en : entity) {
 			if (en != null) {
-				save(en, entityType, conditions);
+				save(en, visitorType, conditions);
 			}
 		}
 	}
 
 	@Override
-	public <T> void delete(T[] entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void delete(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
 		for (T en : entity) {
 			if (en != null) {
-				delete(en, entityType, conditions);
+				delete(en, visitorType, conditions);
 			}
 		}
 	}

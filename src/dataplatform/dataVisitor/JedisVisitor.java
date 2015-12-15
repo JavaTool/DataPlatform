@@ -55,7 +55,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T get(Class<T> clz, EntityType entityType, Map<String, Object> conditions) {
+	public <T> T get(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
 		Jedis jedis = getJedis();
 		String key = (String) Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
 		String name = (String) conditions.get(CONDITION_NAME);
@@ -97,7 +97,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> List<T> getList(Class<T> clz, EntityType entityType, Map<String, Object> conditions) {
+	public <T> List<T> getList(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
 		Jedis jedis = getJedis();
 		List<T> list = Lists.newLinkedList();
 		Object conditionKey = Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
@@ -165,7 +165,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void save(T entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void save(T entity, VisitorType visitorType, Map<String, Object> conditions) {
 		Jedis jedis = getJedis();
 		String key = (String) Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
 		String name = (String) conditions.get(CONDITION_NAME);
@@ -189,7 +189,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void delete(T entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void delete(T entity, VisitorType visitorType, Map<String, Object> conditions) {
 		Jedis jedis = getJedis();
 		String key = (String) Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
 		String name = (String) conditions.get(CONDITION_NAME);
@@ -213,7 +213,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void save(T[] entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void save(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
 		if (entity.length > 0) {
 			Jedis jedis = getJedis();
 			Object conditionKey = Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
@@ -275,7 +275,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void delete(T[] entity, EntityType entityType, Map<String, Object> conditions) {
+	public <T> void delete(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
 		Object conditionKey = Preconditions.checkNotNull(conditions.get(CONDITION_KEY), "Do not have condition : {}", CONDITION_KEY);
 		Object conditionNames = conditions.get(CONDITION_NAME);
 		if (conditionKey instanceof String[]) {
@@ -283,7 +283,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 			Map<String, Object> map = Maps.newHashMap();
 			for (int i = 0;i < entity.length;i++) {
 				map.put(CONDITION_KEY, keys[i]);
-				delete(entity[i], entityType, map);
+				delete(entity[i], visitorType, map);
 				map.clear();
 			}
 		} else {
@@ -293,7 +293,7 @@ public abstract class JedisVisitor implements IDataVisitor {
 			for (int i = 0;i < entity.length;i++) {
 				map.put(CONDITION_KEY, key);
 				map.put(CONDITION_NAME, names[i]);
-				delete(entity[i], entityType, map);
+				delete(entity[i], visitorType, map);
 				map.clear();
 			}
 		}

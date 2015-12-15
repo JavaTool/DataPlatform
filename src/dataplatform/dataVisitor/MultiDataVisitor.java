@@ -18,8 +18,8 @@ public final class MultiDataVisitor implements IMultiDataVisitor {
 	}
 
 	@Override
-	public <T> T get(Class<T> clz, EntityType entityType, Map<String, Object> conditions) {
-		return getDataVisitor(clz).get(clz, entityType, conditions);
+	public <T> T get(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
+		return getDataVisitor(clz).get(clz, visitorType, conditions);
 	}
 	
 	private <T> IDataVisitor getDataVisitor(Class<T> clz) {
@@ -27,28 +27,28 @@ public final class MultiDataVisitor implements IMultiDataVisitor {
 	}
 
 	@Override
-	public <T> List<T> getList(Class<T> clz, EntityType entityType, Map<String, Object> conditions) {
-		return getDataVisitor(clz).getList(clz, entityType, conditions);
+	public <T> List<T> getList(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
+		return getDataVisitor(clz).getList(clz, visitorType, conditions);
 	}
 
 	@Override
-	public <T> void save(T entity, EntityType entityType, Map<String, Object> conditions) {
-		getDataVisitor(entity.getClass()).save(entity, entityType, conditions);
+	public <T> void save(T entity, VisitorType visitorType, Map<String, Object> conditions) {
+		getDataVisitor(entity.getClass()).save(entity, visitorType, conditions);
 	}
 
 	@Override
-	public <T> void delete(T entity, EntityType entityType, Map<String, Object> conditions) {
-		getDataVisitor(entity.getClass()).delete(entity, entityType, conditions);
+	public <T> void delete(T entity, VisitorType visitorType, Map<String, Object> conditions) {
+		getDataVisitor(entity.getClass()).delete(entity, visitorType, conditions);
 	}
 
 	@Override
-	public <T> void save(T[] entity, EntityType entityType, Map<String, Object> conditions) {
-		getDataVisitor(entity[0].getClass()).save(entity, entityType, conditions);
+	public <T> void save(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
+		getDataVisitor(entity[0].getClass()).save(entity, visitorType, conditions);
 	}
 
 	@Override
-	public <T> void delete(T[] entity, EntityType entityType, Map<String, Object> conditions) {
-		getDataVisitor(entity[0].getClass()).delete(entity, entityType, conditions);
+	public <T> void delete(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
+		getDataVisitor(entity[0].getClass()).delete(entity, visitorType, conditions);
 	}
 
 	@Override
