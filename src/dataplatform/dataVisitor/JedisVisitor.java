@@ -21,8 +21,6 @@ public abstract class JedisVisitor implements IDataVisitor {
 	
 	protected static final Logger log = LoggerFactory.getLogger(JedisVisitor.class);
 	
-	public static final String CONDITION_KEY = "key";
-	
 	public static final String CONDITION_NAME = "name";
 	
 	@SuppressWarnings("rawtypes")

@@ -5,6 +5,8 @@ import java.util.Map;
 
 public interface IDataVisitor {
 	
+	String CONDITION_KEY = "key";
+	
 	<T> T get(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions);
 	
 	<T> List<T> getList(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions);
