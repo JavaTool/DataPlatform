@@ -1,4 +1,4 @@
-package dataplatform.dataVisitor;
+package dataplatform.udsl;
 
 import java.util.Iterator;
 import java.util.List;
@@ -18,7 +18,7 @@ import com.google.common.collect.Maps;
 
 import dataplatform.persist.DataAccessException;
 
-public final class HibernateVistor implements IDataVisitor {
+class HibernateUDSL implements UDSL {
 	
 	private Configuration conf;
 	
@@ -28,7 +28,7 @@ public final class HibernateVistor implements IDataVisitor {
 	
 	private Map<String, Lock> locks;
 	
-	public HibernateVistor(Configuration conf) {
+	public HibernateUDSL(Configuration conf) {
 		this.conf = conf;
 		initHibernate();
 		initLocks();
@@ -74,38 +74,43 @@ public final class HibernateVistor implements IDataVisitor {
 		}
 	}
 	
-	private String makeHql(String entityName, Map<String, Object> conditions) {
+	private String makeHql(String entityName, Object... params) {
 		StringBuilder builder = new StringBuilder("from ");
 		builder.append(entityName);
-		if (conditions != null) {
-			
+		if (params.length > 1) {
+			builder.append(" where");
+			for (int i = 1;i < params.length;i += 2) {
+				builder.append(" ").append(params[i]).append("=?");
+			}
 		}
 		return builder.toString();
 	}
 	
-	private <T> String getEntityName(Class<T> clz, VisitorType visitorType) {
-		return clz.getName();
+	private <T> String getEntityName(Class<T> clz) {
+		return clz.toString();
 	}
 	
-	private Query createQuery(String entityName, Map<String, Object> conditions) {
-		Query query = getSession().createQuery(makeHql(entityName, conditions));
-		if (conditions != null) {
-			conditions.forEach((key, value) -> {query.setParameter(key, value);});
+	private Query createQuery(String entityName, Object... params) {
+		Query query = getSession().createQuery(makeHql(entityName, params));
+		if (params.length > 1) {
+			for (int i = 2, index = 0;i < params.length;i += 2, index++) {
+				query.setParameter(index, params[i]);
+			}
 		}
 		return query;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T get(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
-		String entityName = getEntityName(clz, visitorType);
+	public <T> T fetch(Object... params) {
+		String entityName = params[0].toString();
 		Lock lock = getLock(entityName);
 		lock.lock();
 		try {
 			Session session = getSession();
 			Transaction tx = session.beginTransaction();
 			try {
-				Query query = createQuery(entityName, conditions);
+				Query query = createQuery(entityName, params);
 				Object entity = query.uniqueResult();
 				session.clear();
 				tx.commit();
@@ -124,9 +129,73 @@ public final class HibernateVistor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void save(T entity, VisitorType visitorType, Map<String, Object> conditions) {
+	public <T> List<T> find(Object... params) {
+		String entityName = params[0].toString();
+		Lock lock = getLock(entityName);
+		lock.lock();
+		try{
+			Session session = getSession();
+			Transaction tx = session.beginTransaction();
+			try {
+				Query query = createQuery(entityName, params);
+				@SuppressWarnings("unchecked")
+				List<T> list = query.list();
+				session.clear();
+				tx.commit();
+				return list;
+			} catch (Exception e) {
+				tx.rollback();
+				throw new DataAccessException(e);
+			}
+		} catch(DataAccessException e) {
+			throw e;
+		} catch(Exception e) {
+			throw new DataAccessException(e); 
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	@Override
+	public <T> List<T> orderBy(boolean dec, Object... params) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> List<T> limit(int offset, int count, Object... params) {
+		String entityName = params[0].toString();
+		Lock lock = getLock(entityName);
+		lock.lock();
+		try {
+			Session session = getSession();
+			Transaction tx = session.beginTransaction();
+			try {
+				Query query = createQuery(entityName, params);
+		        query.setFirstResult(offset);
+		        query.setMaxResults(count);
+				@SuppressWarnings("unchecked")
+				List<T> list = query.list();
+		        session.clear();
+				tx.commit();
+				return list;
+			} catch (Exception e) {
+				tx.rollback();
+				throw new DataAccessException(e);
+			}
+		} catch(DataAccessException e) {
+			throw e;
+		} catch(Exception e) {
+			throw new DataAccessException(e); 
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	@Override
+	public <T> void save(T entity) {
 		checkCreateObject(entity);
-		String entityName = getEntityName(entity.getClass(), visitorType);
+		String entityName = getEntityName(entity.getClass());
 		Lock lock = getLock(entityName);
 		lock.lock();
 		try {
@@ -149,63 +218,17 @@ public final class HibernateVistor implements IDataVisitor {
 	}
 
 	@Override
-	public <T> void delete(T entity, VisitorType visitorType, Map<String, Object> conditions) {
-		String entityName = getEntityName(entity.getClass(), visitorType);
+	public <T> void delete(T entity) {
+		String entityName = getEntityName(entity.getClass());
 		Session session = getSession();
 		Transaction tx = session.beginTransaction();
 		try {
-			Query query = createQuery(entityName, conditions);
+			Query query = createQuery(entityName);
 			query.executeUpdate();
 			tx.commit();
 		} catch (Exception e) {
 			tx.rollback();
 			throw new DataAccessException(e);
-		}
-	}
-
-	@Override
-	public <T> List<T> getList(Class<T> clz, VisitorType visitorType, Map<String, Object> conditions) {
-		String entityName = getEntityName(clz, visitorType);
-		Lock lock = getLock(entityName);
-		lock.lock();
-		try{
-			Session session = getSession();
-			Transaction tx = session.beginTransaction();
-			try {
-				Query query = createQuery(entityName, conditions);
-				@SuppressWarnings("unchecked")
-				List<T> list = query.list();
-				session.clear();
-				tx.commit();
-				return list;
-			} catch (Exception e) {
-				tx.rollback();
-				throw new DataAccessException(e);
-			}
-		} catch(DataAccessException e) {
-			throw e;
-		} catch(Exception e) {
-			throw new DataAccessException(e); 
-		} finally {
-			lock.unlock();
-		}
-	}
-
-	@Override
-	public <T> void save(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
-		for (T en : entity) {
-			if (en != null) {
-				save(en, visitorType, conditions);
-			}
-		}
-	}
-
-	@Override
-	public <T> void delete(T[] entity, VisitorType visitorType, Map<String, Object> conditions) {
-		for (T en : entity) {
-			if (en != null) {
-				delete(en, visitorType, conditions);
-			}
 		}
 	}
 
