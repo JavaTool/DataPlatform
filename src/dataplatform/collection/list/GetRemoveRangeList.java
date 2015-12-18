@@ -34,23 +34,24 @@ class GetRemoveRangeList<V> implements IRangeList<V> {
 	public V get(int key) {
 		if (isEmpty()) {
 			return null;
-		}
-		Node<V> preNode = null;
-		Node<V> node = head;
-		while (node.next != null) {
-			if (key < node.max) {
-				if (preNode == null) {
-					setNewHead(node.next);
+		} else {
+			Node<V> preNode = null;
+			Node<V> node = head;
+			while (node.next != null) {
+				if (key < node.max) {
+					if (preNode == null) {
+						setNewHead(node.next);
+					} else {
+						preNode.setNext(node.next);
+					}
+					return node.value;
 				} else {
-					preNode.setNext(node.next);
+					preNode = node;
+					node = node.next;
 				}
-				return node.value;
-			} else {
-				preNode = node;
-				node = node.next;
 			}
+			return null;
 		}
-		return null;
 	}
 	
 	private void setNewHead(Node<V> head) {
