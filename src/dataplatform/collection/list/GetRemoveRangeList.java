@@ -37,12 +37,15 @@ class GetRemoveRangeList<V> implements IRangeList<V> {
 		} else {
 			Node<V> preNode = null;
 			Node<V> node = head;
-			while (node.next != null) {
+			while (node != null) {
 				if (key < node.max) {
 					if (preNode == null) {
 						setNewHead(node.next);
 					} else {
 						preNode.setNext(node.next);
+						if (node.next == null) {
+							tail = preNode;
+						}
 					}
 					return node.value;
 				} else {
@@ -62,8 +65,13 @@ class GetRemoveRangeList<V> implements IRangeList<V> {
 				node.base = base;
 				node.max = node.base + node.bound;
 				base = node.max;
-				node = node.next;
-				tail = node;
+				if (node.next != null) {
+					node = node.next;
+					tail = node;
+				} else {
+					tail = node;
+					node = node.next;
+				}
 			}
 		} else {
 			tail = null;
