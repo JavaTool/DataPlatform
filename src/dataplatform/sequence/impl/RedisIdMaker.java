@@ -1,4 +1,4 @@
-package dataplatform.cache.sequence.impl;
+package dataplatform.sequence.impl;
 
 import redis.clients.jedis.Jedis;
 import dataplatform.cache.redis.CacheOnJedis;

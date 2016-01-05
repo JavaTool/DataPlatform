@@ -1,4 +1,4 @@
-package dataplatform.cache.sequence.impl;
+package dataplatform.sequence.impl;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

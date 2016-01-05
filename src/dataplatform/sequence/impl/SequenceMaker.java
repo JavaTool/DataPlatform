@@ -1,4 +1,4 @@
-package dataplatform.cache.sequence.impl;
+package dataplatform.sequence.impl;
 
 import dataplatform.cache.ICache;
 import dataplatform.sequence.IInstanceIdMaker;
