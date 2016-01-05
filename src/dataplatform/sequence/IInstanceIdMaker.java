@@ -1,4 +1,4 @@
-package dataplatform.cache.sequence;
+package dataplatform.sequence;
 
 /**
  * id生成器

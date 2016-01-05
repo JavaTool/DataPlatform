@@ -2,7 +2,7 @@ package dataplatform.cache.sequence.impl;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import dataplatform.cache.sequence.IInstanceIdMaker;
+import dataplatform.sequence.IInstanceIdMaker;
 
 /**
  * Java自动id生成器

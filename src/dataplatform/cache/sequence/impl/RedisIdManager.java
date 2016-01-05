@@ -5,8 +5,8 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import dataplatform.cache.redis.CacheOnSingleJedis;
-import dataplatform.cache.sequence.IInstanceIdMaker;
-import dataplatform.cache.sequence.IInstanceIdManager;
+import dataplatform.sequence.IInstanceIdMaker;
+import dataplatform.sequence.IInstanceIdManager;
 
 /**
  * Redis-id管理器

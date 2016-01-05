@@ -5,8 +5,8 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import dataplatform.cache.redis.CacheOnJedisPool;
-import dataplatform.cache.sequence.IInstanceIdMaker;
-import dataplatform.cache.sequence.IInstanceIdManager;
+import dataplatform.sequence.IInstanceIdMaker;
+import dataplatform.sequence.IInstanceIdManager;
 
 public class RedisPoolIdManager extends CacheOnJedisPool implements IInstanceIdManager {
 	

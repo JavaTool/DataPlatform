@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dataplatform.cache.redis.CacheOnJedis;
-import dataplatform.cache.sequence.ICounter;
+import dataplatform.sequence.ICounter;
 import redis.clients.jedis.Jedis;
 
 public class RedisCounter implements ICounter {

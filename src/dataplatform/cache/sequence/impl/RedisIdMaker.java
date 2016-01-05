@@ -2,7 +2,7 @@ package dataplatform.cache.sequence.impl;
 
 import redis.clients.jedis.Jedis;
 import dataplatform.cache.redis.CacheOnJedis;
-import dataplatform.cache.sequence.IInstanceIdMaker;
+import dataplatform.sequence.IInstanceIdMaker;
 
 /**
  * Redis-id生成器

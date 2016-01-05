@@ -4,8 +4,8 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import dataplatform.cache.sequence.IInstanceIdMaker;
-import dataplatform.cache.sequence.IInstanceIdManager;
+import dataplatform.sequence.IInstanceIdMaker;
+import dataplatform.sequence.IInstanceIdManager;
 
 public class RuntimeInstanceIdManager implements IInstanceIdManager {
 	

@@ -1,7 +1,7 @@
 package dataplatform.cache.sequence.impl;
 
 import dataplatform.cache.ICache;
-import dataplatform.cache.sequence.IInstanceIdMaker;
+import dataplatform.sequence.IInstanceIdMaker;
 
 /**
  * 序列号生成器
