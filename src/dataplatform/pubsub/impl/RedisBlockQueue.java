@@ -13,8 +13,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import dataplatform.cache.redis.CacheOnJedis;
-import dataplatform.cache.redis.CacheOnJedisPool;
+import dataplatform.cache.redis.IJedisReources;
 import dataplatform.coder.bytes.ByteCoders;
 import dataplatform.coder.bytes.IBytesCoder;
 import dataplatform.pubsub.IPubsub;
@@ -28,7 +27,7 @@ public class RedisBlockQueue implements IPubsub {
 	
 	private static final int THREAD_COUNT = 5;
 	
-	private final CacheOnJedis cache;
+	private final IJedisReources cache;
 	
 	private final IBytesCoder coder;
 	
@@ -36,14 +35,14 @@ public class RedisBlockQueue implements IPubsub {
 	
 	private final ListeningExecutorService listeningExecutorService;
 	
-	public RedisBlockQueue(CacheOnJedis cache, IBytesCoder coder) {
+	public RedisBlockQueue(IJedisReources cache, IBytesCoder coder) {
 		this.cache = cache;
 		this.coder = coder;
 		listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_COUNT));
 		subscribes = Maps.newConcurrentMap();
 	}
 	
-	public RedisBlockQueue(CacheOnJedis cache) {
+	public RedisBlockQueue(IJedisReources cache) {
 		this(cache, ByteCoders.newSerialableCoder());
 	}
 
@@ -123,47 +122,47 @@ public class RedisBlockQueue implements IPubsub {
 	}
 	
 	public static void main(String[] args) {
-		CacheOnJedis cache = new CacheOnJedisPool("localhost:6379", 100, 100, 100000L);
-		IBytesCoder coder = ByteCoders.newSerialableCoder();
-		IPubsub pubsub = new RedisBlockQueue(cache, coder);
-		String channel = "TestSubscribe";
-		String[] channels = new String[5];
-		for (int i = 0;i < channels.length;i++) {
-			channels[i] = channel + i;
-		}
-		for (int i = 0;i < 5;i++) {
-			pubsub.subscribe(new Subscribe(i), channels);
-		}
-		for (int i = 0;i < 20;i++) {
-			for (String ch : channels) {
-				pubsub.publish(ch, i + " - message - " + ch);
-			}
-		}
-		cache.del(channel);
+//		IJedisReources cache = new CacheOnJedisPool("localhost:6379", 100, 100, 100000L);
+//		IBytesCoder coder = ByteCoders.newSerialableCoder();
+//		IPubsub pubsub = new RedisBlockQueue(cache, coder);
+//		String channel = "TestSubscribe";
+//		String[] channels = new String[5];
+//		for (int i = 0;i < channels.length;i++) {
+//			channels[i] = channel + i;
+//		}
+//		for (int i = 0;i < 5;i++) {
+//			pubsub.subscribe(new Subscribe(i), channels);
+//		}
+//		for (int i = 0;i < 20;i++) {
+//			for (String ch : channels) {
+//				pubsub.publish(ch, i + " - message - " + ch);
+//			}
+//		}
+//		cache.del(channel);
 	}
 	
-	private static class Subscribe implements ISubscribe {
-		
-		private final int id;
-		
-		public Subscribe(int id) {
-			this.id = id;
-		}
-
-		@Override
-		public void onMessage(String channel, Object message) {
-			try {
-				System.out.println("ID [" + id + "] CHANNEL [" + channel + "] MESSAGE [" + message +"]");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		@Override
-		public int getTimeout() {
-			return 100000;
-		}
-		
-	}
+//	private static class Subscribe implements ISubscribe {
+//		
+//		private final int id;
+//		
+//		public Subscribe(int id) {
+//			this.id = id;
+//		}
+//
+//		@Override
+//		public void onMessage(String channel, Object message) {
+//			try {
+//				System.out.println("ID [" + id + "] CHANNEL [" + channel + "] MESSAGE [" + message +"]");
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//		}
+//
+//		@Override
+//		public int getTimeout() {
+//			return 100000;
+//		}
+//		
+//	}
 
 }

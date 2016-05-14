@@ -1,95 +1,66 @@
 package dataplatform.sequence.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.TimeUnit;
 
-import dataplatform.cache.redis.CacheOnJedis;
+import dataplatform.cache.ICache;
 import dataplatform.sequence.ICounter;
-import redis.clients.jedis.Jedis;
 
 public class RedisCounter implements ICounter {
 	
-	protected static final Logger log = LoggerFactory.getLogger(RedisCounter.class);
+	private final ICache<String, String, Integer> cache;
 	
-	private final CacheOnJedis cache;
-	
-	public RedisCounter(CacheOnJedis cache) {
+	public RedisCounter(ICache<String, String, Integer> cache) {
 		this.cache = cache;
 	}
 
 	@Override
 	public long getCount(String key) {
-		Jedis jedis = cache.getJedis();
-		try {
-			String vaule = (String) jedis.get(key);
-			return Long.parseLong(vaule == null ? "0" : vaule);
-		} finally {
-			cache.useFinish(jedis);
-		}
+		return cache.value().get(key);
 	}
 
 	@Override
 	public long incr(String key, long value, long time) {
-		Jedis jedis = cache.getJedis();
-		try {
-			setTime(jedis, key, time);
-			return jedis.incrBy(key, value);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		} finally {
-			cache.useFinish(jedis);
-		}
+		long ret = cache.value().incr(key, value);
+		setTime(key, time);
+		return ret;
 	}
 	
-	protected void setTime(Jedis jedis, String key, long time) {
+	protected void setTime(String key, long time) {
 		if (time != NO_TIME) {
-			jedis.pexpire(key, time);
+			cache.key().expire(key, time, TimeUnit.MILLISECONDS);
 		}
 	}
 
 	@Override
 	public long decr(String key, long value, long time) {
-		Jedis jedis = cache.getJedis();
-		try {
-			setTime(jedis, key, time);
-			return jedis.decrBy(key, value);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		} finally {
-			cache.useFinish(jedis);
-		}
+		long ret = cache.value().decr(key, value);
+		setTime(key, time);
+		return ret;
 	}
 
 	@Override
 	public void deleteCount(String key) {
-		cache.del(key);
+		cache.key().delete(key);
 	}
 
 	@Override
 	public long getCount(String key, String name) {
-		Jedis jedis = cache.getJedis();
-		try {
-			String vaule = (String) jedis.hget(key, name);
-			return Long.parseLong(vaule == null ? "0" : vaule);
-		} finally {
-			cache.useFinish(jedis);
-		}
+		return cache.hash().get(key, name);
 	}
 
 	@Override
 	public long incr(String key, String name, long value, long time) {
-		Jedis jedis = cache.getJedis();
-		try {
-			setTime(jedis, key, time);
-			return jedis.hincrBy(key, name, value);
-		} catch (Exception e) {
-			log.error("", e);
-			return 0L;
-		} finally {
-			cache.useFinish(jedis);
-		}
+//		Jedis jedis = cache.getJedis();
+//		try {
+//			setTime(jedis, key, time);
+//			return jedis.hincrBy(key, name, value);
+//		} catch (Exception e) {
+//			log.error("", e);
+//			return 0L;
+//		} finally {
+//			cache.useFinish(jedis);
+//		}
+		return 0;
 	}
 
 	@Override
@@ -99,7 +70,7 @@ public class RedisCounter implements ICounter {
 
 	@Override
 	public void deleteCount(String key, String name) {
-		cache.hdel(key, name);
+		cache.hash().remove(key, name);
 	}
 
 }

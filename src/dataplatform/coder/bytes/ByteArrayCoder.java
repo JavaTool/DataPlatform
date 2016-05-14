@@ -33,4 +33,9 @@ class ByteArrayCoder implements IBytesCoder {
 		return new ByteArrayMessage(datas, messageId, ip);
 	}
 
+	@Override
+	public <T> T read(byte[] stream, Class<T> clz) throws Exception {
+		return null;
+	}
+
 }

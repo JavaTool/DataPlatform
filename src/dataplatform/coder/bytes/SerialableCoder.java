@@ -16,4 +16,10 @@ class SerialableCoder implements IBytesCoder {
 		return SerializaUtil.deserializable(stream);
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T read(byte[] stream, Class<T> clz) throws Exception {
+		return (T) read(stream);
+	}
+
 }

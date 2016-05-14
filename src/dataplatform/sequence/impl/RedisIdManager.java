@@ -4,7 +4,8 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import dataplatform.cache.redis.CacheOnSingleJedis;
+import dataplatform.cache.redis.ExistsJedisReources;
+import dataplatform.cache.redis.IJedisReources;
 import dataplatform.sequence.IInstanceIdMaker;
 import dataplatform.sequence.IInstanceIdManager;
 
@@ -12,13 +13,13 @@ import dataplatform.sequence.IInstanceIdManager;
  * Redis-id管理器
  * @author	fuhuiyuan
  */
-public class RedisIdManager extends CacheOnSingleJedis implements IInstanceIdManager {
+public class RedisIdManager extends ExistsJedisReources implements IInstanceIdManager {
 	
 	/**id生成器集合*/
 	protected Map<String, IInstanceIdMaker> idMakers;
 
-	public RedisIdManager(String redisHostContent) {
-		super(redisHostContent);
+	public RedisIdManager(IJedisReources jedisReources) {
+		setResouces(jedisReources);
 		idMakers = Maps.newHashMap();
 	}
 

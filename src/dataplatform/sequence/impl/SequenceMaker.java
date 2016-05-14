@@ -10,18 +10,18 @@ import dataplatform.sequence.IInstanceIdMaker;
 public class SequenceMaker implements IInstanceIdMaker {
 	
 	/**缓存器*/
-	protected ICache cache;
+	protected ICache<String, String, Integer> cache;
 	/**名称*/
 	protected String name;
 	
-	public SequenceMaker(ICache cache, String name) {
+	public SequenceMaker(ICache<String, String, Integer> cache, String name) {
 		this.cache = cache;
 		this.name = name;
 	}
 
 	@Override
 	public synchronized int nextInstanceId() {
-		Object value = cache.get(name);
+		Object value = cache.hash().get(name);
 		return value == null ? 0 : Integer.parseInt(value.toString()) + 1;
 	}
 

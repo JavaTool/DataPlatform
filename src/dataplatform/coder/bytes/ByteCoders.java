@@ -16,5 +16,9 @@ public final class ByteCoders {
 	public static IBytesCoder newSerialableCoder() {
 		return map.getOrDefault(SerialableCoder.class, new SerialableCoder());
 	}
+	
+	public static IBytesCoder newProtoStuffCoder() {
+		return map.getOrDefault(ProtoStuffCoder.class, new ProtoStuffCoder());
+	}
 
 }

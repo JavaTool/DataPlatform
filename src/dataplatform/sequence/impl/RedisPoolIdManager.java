@@ -4,17 +4,18 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import dataplatform.cache.redis.CacheOnJedisPool;
+import dataplatform.cache.redis.ExistsJedisReources;
+import dataplatform.cache.redis.IJedisReources;
 import dataplatform.sequence.IInstanceIdMaker;
 import dataplatform.sequence.IInstanceIdManager;
 
-public class RedisPoolIdManager extends CacheOnJedisPool implements IInstanceIdManager {
+public class RedisPoolIdManager extends ExistsJedisReources implements IInstanceIdManager {
 	
 	/**id生成器集合*/
 	protected Map<String, IInstanceIdMaker> idMakers;
 
-	public RedisPoolIdManager(String address, int maxTotal, int maxIdle, long waitTime) {
-		super(address, maxTotal, maxIdle, waitTime);
+	public RedisPoolIdManager(IJedisReources jedisReources) {
+		setResouces(jedisReources);
 		idMakers = Maps.newHashMap();
 	}
 

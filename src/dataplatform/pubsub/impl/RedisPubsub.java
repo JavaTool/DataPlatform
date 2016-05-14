@@ -12,7 +12,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import dataplatform.cache.redis.CacheOnJedis;
+import dataplatform.cache.redis.IJedisReources;
 import dataplatform.coder.bytes.ByteCoders;
 import dataplatform.coder.bytes.IBytesCoder;
 import dataplatform.pubsub.IPubsub;
@@ -27,7 +27,7 @@ public class RedisPubsub implements IPubsub {
 	
 	private static final int THREAD_COUNT = 5;
 	
-	private final CacheOnJedis cache;
+	private final IJedisReources cache;
 	
 	private final IBytesCoder coder;
 	
@@ -35,14 +35,14 @@ public class RedisPubsub implements IPubsub {
 	
 	private final ListeningExecutorService listeningExecutorService;
 	
-	public RedisPubsub(CacheOnJedis cache, IBytesCoder coder) {
+	public RedisPubsub(IJedisReources cache, IBytesCoder coder) {
 		this.cache = cache;
 		this.coder = coder;
 		listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_COUNT));
 		subscribes = Maps.newConcurrentMap();
 	}
 	
-	public RedisPubsub(CacheOnJedis cache) {
+	public RedisPubsub(IJedisReources cache) {
 		this(cache, ByteCoders.newSerialableCoder());
 	}
 
