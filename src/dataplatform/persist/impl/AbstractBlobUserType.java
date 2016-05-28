@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.type.StandardBasicTypes;
 
 import dataplatform.persist.BlobUserType;
@@ -27,7 +28,7 @@ public abstract class AbstractBlobUserType implements BlobUserType {
 	}
 
 	@Override
-	public Object nullSafeGet(ResultSet resultSet, String[] names, Object owner) throws HibernateException, SQLException {
+	public Object nullSafeGet(ResultSet resultSet, String[] names, SessionImplementor session, Object owner) throws HibernateException, SQLException {
 		byte[] bytes = resultSet.getBytes(names[0]);
 		try {
 			return makeObject(bytes, owner);
@@ -37,7 +38,7 @@ public abstract class AbstractBlobUserType implements BlobUserType {
 	}
 
 	@Override
-	public void nullSafeSet(PreparedStatement statement, Object value, int index) throws HibernateException, SQLException {
+	public void nullSafeSet(PreparedStatement statement, Object value, int index, SessionImplementor session) throws HibernateException, SQLException {
 		byte[] bytes = makeBytes(value);
 		if (bytes != null) {
 			statement.setBytes(index, bytes);
