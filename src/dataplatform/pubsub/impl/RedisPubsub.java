@@ -13,13 +13,11 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import dataplatform.cache.redis.IJedisReources;
-import dataplatform.coder.bytes.ByteCoders;
-import dataplatform.coder.bytes.IBytesCoder;
+import dataplatform.coder.bytes.IStreamCoder;
+import dataplatform.coder.bytes.StreamCoders;
 import dataplatform.pubsub.IPubsub;
 import dataplatform.pubsub.ISubscribe;
-import dataplatform.util.SerializaUtil;
 import redis.clients.jedis.BinaryJedisPubSub;
-import redis.clients.jedis.Jedis;
 
 public class RedisPubsub implements IPubsub {
 	
@@ -29,13 +27,13 @@ public class RedisPubsub implements IPubsub {
 	
 	private final IJedisReources cache;
 	
-	private final IBytesCoder coder;
+	private final IStreamCoder coder;
 	
 	private final Map<ISubscribe, ListenableFuture<SubscribeThread>> subscribes;
 	
 	private final ListeningExecutorService listeningExecutorService;
 	
-	public RedisPubsub(IJedisReources cache, IBytesCoder coder) {
+	public RedisPubsub(IJedisReources cache, IStreamCoder coder) {
 		this.cache = cache;
 		this.coder = coder;
 		listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_COUNT));
@@ -43,23 +41,16 @@ public class RedisPubsub implements IPubsub {
 	}
 	
 	public RedisPubsub(IJedisReources cache) {
-		this(cache, ByteCoders.newSerialableCoder());
+		this(cache, StreamCoders.newProtoStuffCoder());
 	}
 
 	@Override
 	public void publish(String channel, Object message) {
-		Jedis jedis = cache.getJedis();
-		try {
-			Preconditions.checkNotNull(channel, "null channel name.");
-			Preconditions.checkNotNull(message, "null message");
-			Preconditions.checkArgument(channel.length() > 0, "zero length channel name.");
+		Preconditions.checkNotNull(channel, "null channel name.");
+		Preconditions.checkNotNull(message, "null message");
+		Preconditions.checkArgument(channel.length() > 0, "zero length channel name.");
 
-			jedis.publish(SerializaUtil.serializable(channel), coder.write(message));
-		} catch (Exception e) {
-			log.error("", e);
-		} finally {
-			cache.useFinish(jedis);
-		}
+		cache.exec(jedis -> jedis.publish(coder.write(channel), coder.write(message)));
 	}
 
 	@Override
@@ -90,7 +81,7 @@ public class RedisPubsub implements IPubsub {
 	protected byte[][] stringToBytes(String... channel) throws Exception {
 		byte[][] channels = new byte[channel.length][];
 		for (int i = 0;i < channel.length;i++) {
-			channels[i] = SerializaUtil.serializable(channel[i]);
+			channels[i] = coder.write(channel[i]);
 		}
 		return channels;
 	}
@@ -108,20 +99,13 @@ public class RedisPubsub implements IPubsub {
 
 		@Override
 		public void run() {
-			Jedis jedis = cache.getJedis();
-			try {
-				jedis.subscribe(this, channels);
-			} catch (Exception e) {
-				log.error("", e);
-			} finally {
-				cache.useFinish(jedis);
-			}
+			cache.exec(jedis -> jedis.subscribe(this, channels));
 		}
 
 		@Override
 		public void onMessage(byte[] channel, byte[] message) {
 			try {
-				String channelName = (String) SerializaUtil.deserializable(channel);
+				String channelName = coder.read(channel);
 				Object object = coder.read(message);
 				subscribe.onMessage(channelName, object);
 			} catch (Exception e) {

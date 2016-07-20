@@ -6,14 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 
 import dataplatform.cache.ICacheValue;
 import dataplatform.cache.redis.ExistsJedisReources;
 import dataplatform.cache.redis.IJedisReources;
-import redis.clients.jedis.Jedis;
 
 public class RedisBytesValue extends ExistsJedisReources implements ICacheValue<byte[], byte[]> {
+	
+	private static final List<byte[]> EMPTY_LIST = ImmutableList.of();
 	
 	public RedisBytesValue(IJedisReources jedisReources) {
 		setResouces(jedisReources);
@@ -21,96 +22,51 @@ public class RedisBytesValue extends ExistsJedisReources implements ICacheValue<
 
 	@Override
 	public void append(byte[] key, byte[] value) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.append(key, value);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+		exec((jedis) -> jedis.append(key, value));
 	}
 
 	@Override
 	public long decr(byte[] key, long decrement) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.decrBy(key, decrement);
-		} catch (Exception e) {
-			error("", e);
-			return 0;
-		} finally {
-			useFinish(jedis);
-		}
+		}, 0L);
 	}
 
 	@Override
 	public byte[] get(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.get(key);
-		} catch (Exception e) {
-			error("", e);
-			return null;
-		} finally {
-			useFinish(jedis);
-		}
+		}, null);
 	}
 
 	@Override
-	public List<byte[]> get(Object... keys) {
-		Jedis jedis = getJedis();
-		try {
+	public List<byte[]> multiGet(Object... keys) {
+		return exec((jedis) -> {
 			return jedis.mget((byte[][]) keys);
-		} catch (Exception e) {
-			error("", e);
-			return Lists.newLinkedList();
-		} finally {
-			useFinish(jedis);
-		}
+		}, EMPTY_LIST);
 	}
 
 	@Override
 	public long incr(byte[] key, long increment) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.incrBy(key, increment);
-		} catch (Exception e) {
-			error("", e);
-			return 0;
-		} finally {
-			useFinish(jedis);
-		}
+		}, 0L);
 	}
 
 	@Override
 	public void set(byte[] key, byte[] value) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.set(key, value);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+		exec((jedis) -> jedis.set(key, value));
 	}
 
 	@Override
-	public void set(byte[] key, byte[] value, boolean exists, long time, TimeUnit timeUnit) {
-		time = toMilliTime(time, timeUnit);
-		
-		Jedis jedis = getJedis();
-		try {
-			jedis.set(key, value, (exists ? "XX".getBytes() : "NX".getBytes()), "PX".getBytes(), time);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+	public boolean xSet(byte[] key, byte[] value, boolean exists, long time, TimeUnit timeUnit) {
+		return exec(jedis -> {
+			return jedis.set(key, value, (exists ? "XX".getBytes() : "NX".getBytes()), "PX".getBytes(), toMilliTime(time, timeUnit)).equals("OK");
+		}, false);
 	}
 
 	@Override
-	public void set(Map<byte[], byte[]> map) {
+	public void multiSet(Map<byte[], byte[]> map) {
 		byte[][] keyValues = new byte[map.size() << 1][];
 		int index = 0;
 		for (byte[] key : map.keySet()) {
@@ -118,15 +74,8 @@ public class RedisBytesValue extends ExistsJedisReources implements ICacheValue<
 			keyValues[(index << 1) + 1] = map.get(key);
 			++index;
 		}
-		
-		Jedis jedis = getJedis();
-		try {
-			jedis.mset(keyValues);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+
+		exec((jedis) -> jedis.mset(keyValues));
 	}
 
 }

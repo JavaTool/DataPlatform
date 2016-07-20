@@ -35,7 +35,7 @@ public interface ICacheValue<K, V> {
 	 * @param 	keys
 	 * @return	
 	 */
-	List<V> get(Object... keys);
+	List<V> multiGet(Object... keys);
 	/**
 	 * 将 key 所储存的值加上增量 increment 。
 	 * 如果 key 不存在，那么 key 的值会先被初始化为 0 ，然后再执行 INCR 操作。
@@ -61,12 +61,12 @@ public interface ICacheValue<K, V> {
 	 * @param 	timeUnit
 	 * @see		ICacheValue#set(String, String)
 	 */
-	void set(K key, V value, boolean exists, long time, TimeUnit timeUnit);
+	boolean xSet(K key, V value, boolean exists, long time, TimeUnit timeUnit);
 	/**
 	 * 同时设置一个或多个 key-value 对。
 	 * 如果某个给定 key 已经存在，那么 MSET 会用新值覆盖原来的旧值，如果这不是你所希望的效果，请考虑使用 MSETNX 命令：它只会在所有给定 key 都不存在的情况下进行设置操作。
 	 * @param 	map
 	 */
-	void set(Map<K, V> map);
+	void multiSet(Map<K, V> map);
 
 }

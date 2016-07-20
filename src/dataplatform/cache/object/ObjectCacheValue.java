@@ -5,18 +5,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import dataplatform.cache.ICacheValue;
-import dataplatform.coder.bytes.IBytesCoder;
+import dataplatform.coder.bytes.IStreamCoder;
 
 public class ObjectCacheValue<K, V> extends StreamCoderCache implements ICacheValue<K, V> {
 	
 	private final ICacheValue<byte[], byte[]> cacheValue;
 	
-	private final Class<V> vclz;
-	
-	public ObjectCacheValue(ICacheValue<byte[], byte[]> cacheValue, IBytesCoder bytesCoder, Class<V> vclz) {
-		super(bytesCoder);
+	public ObjectCacheValue(ICacheValue<byte[], byte[]> cacheValue, IStreamCoder streamCoder) {
+		super(streamCoder);
 		this.cacheValue = cacheValue;
-		this.vclz = vclz;
 	}
 
 	@Override
@@ -31,12 +28,12 @@ public class ObjectCacheValue<K, V> extends StreamCoderCache implements ICacheVa
 
 	@Override
 	public V get(K key) {
-		return deserializa(cacheValue.get(serializa(key)), vclz);
+		return deserializa(cacheValue.get(serializa(key)));
 	}
 
 	@Override
-	public List<V> get(Object... keys) {
-		return deserializa(cacheValue.get(serializa(keys)), vclz);
+	public List<V> multiGet(Object... keys) {
+		return deserializa(cacheValue.multiGet(serializa(keys)));
 	}
 
 	@Override
@@ -46,17 +43,18 @@ public class ObjectCacheValue<K, V> extends StreamCoderCache implements ICacheVa
 
 	@Override
 	public void set(K key, V value) {
+		deserializa(serializa(key));
 		cacheValue.set(serializa(key), serializa(value));
 	}
 
 	@Override
-	public void set(K key, V value, boolean exists, long time, TimeUnit timeUnit) {
-		cacheValue.set(serializa(key), serializa(value), exists, time, timeUnit);
+	public boolean xSet(K key, V value, boolean exists, long time, TimeUnit timeUnit) {
+		return cacheValue.xSet(serializa(key), serializa(value), exists, time, timeUnit);
 	}
 
 	@Override
-	public void set(Map<K, V> map) {
-		cacheValue.set(serializa(map));
+	public void multiSet(Map<K, V> map) {
+		cacheValue.multiSet(serializa(map));
 	}
 
 }

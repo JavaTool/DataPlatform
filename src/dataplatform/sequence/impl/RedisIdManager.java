@@ -4,8 +4,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import dataplatform.cache.redis.ExistsJedisReources;
-import dataplatform.cache.redis.IJedisReources;
+import dataplatform.cache.ICache;
 import dataplatform.sequence.IInstanceIdMaker;
 import dataplatform.sequence.IInstanceIdManager;
 
@@ -13,24 +12,22 @@ import dataplatform.sequence.IInstanceIdManager;
  * Redis-id管理器
  * @author	fuhuiyuan
  */
-public class RedisIdManager extends ExistsJedisReources implements IInstanceIdManager {
+public class RedisIdManager implements IInstanceIdManager {
 	
 	/**id生成器集合*/
 	protected Map<String, IInstanceIdMaker> idMakers;
+	
+	protected ICache<String, String, Integer> cache;
 
-	public RedisIdManager(IJedisReources jedisReources) {
-		setResouces(jedisReources);
+	public RedisIdManager(ICache<String, String, Integer> cache) {
+		this.cache = cache;
 		idMakers = Maps.newHashMap();
 	}
 
 	@Override
 	public void create(String name, int baseValue) {
 		if (!idMakers.containsKey(name)) {
-			try {
-				idMakers.put(name, new RedisIdMaker(name, this, baseValue));
-			} catch (Exception e) {
-				log.error("", e);
-			}
+			idMakers.put(name, new RedisIdMaker(name, cache, baseValue));
 		}
 	}
 
@@ -39,8 +36,7 @@ public class RedisIdManager extends ExistsJedisReources implements IInstanceIdMa
 		if (idMakers.containsKey(name)) {
 			return idMakers.get(name).nextInstanceId();
 		} else {
-			log.error("Do not have {} id maker.", name);
-			throw new NullPointerException();
+			throw new NullPointerException("Do not have " + name + " id maker.");
 		}
 	}
 

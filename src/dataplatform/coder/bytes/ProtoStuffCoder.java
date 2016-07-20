@@ -1,60 +1,66 @@
 package dataplatform.coder.bytes;
 
-import java.util.Map;
+import static io.protostuff.LinkedBuffer.allocate;
+import static io.protostuff.ProtostuffIOUtil.mergeFrom;
+import static io.protostuff.ProtostuffIOUtil.writeTo;
+import static io.protostuff.runtime.RuntimeSchema.getSchema;
+import static java.lang.Class.forName;
 
-import com.google.common.collect.Maps;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 
 import io.protostuff.LinkedBuffer;
-import io.protostuff.ProtostuffIOUtil;
 import io.protostuff.Schema;
-import io.protostuff.runtime.RuntimeSchema;
 
-class ProtoStuffCoder implements IBytesCoder {
-	
-	@SuppressWarnings("rawtypes")
-	private final Map<Class, Schema> schemas = Maps.newHashMap();
+class ProtoStuffCoder implements IStreamCoder {
+
+	@Override
+	public <T> byte[] write(T value) throws Exception {
+		if (value instanceof String) {
+			value.hashCode();
+		}
+		@SuppressWarnings("unchecked")
+		Class<T> clz = (Class<T>) value.getClass();
+		ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(bout);
+		dos.writeUTF(clz.getName());
+		// 序列化
+    	if (clz.equals(byte[].class)) {
+    		dos.write((byte[]) value);
+    	} else {
+    		Schema<T> schema = getSchema(clz);
+    		LinkedBuffer buffer = allocate(4096);
+    	    try {
+	    		writeTo(bout, value, schema, buffer);
+    	    } finally {
+    	        buffer.clear();
+    	    }
+    	}
+        return bout.toByteArray();
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public  byte[] write(Object value) throws Exception {
-		// 获取概要
-		@SuppressWarnings("rawtypes")
-		Schema schema = getSchema(value.getClass());
-		// 序列化
-		LinkedBuffer buffer = LinkedBuffer.allocate(4096);
-	    try {
-	        return ProtostuffIOUtil.toByteArray(value, schema, buffer);
-	    } finally {
-	        buffer.clear();
-	    }
-	}
-
-	@Override
-	public <T> T read(byte[] stream, Class<T> clz) throws Exception {
+	public <T> T read(byte[] stream) throws Exception {
 		if (stream == null) {
 			return null;
 		} else {
-			Schema<T> schema = getSchema(clz);
-			T account = clz.newInstance();
-			ProtostuffIOUtil.mergeFrom(stream, account, schema);
-			return account;
+			ByteArrayInputStream bais = new ByteArrayInputStream(stream);
+			DataInputStream dis = new DataInputStream(bais);
+			String className = dis.readUTF();
+			if (className.equals(byte[].class.getName())) {
+				byte[] ret = new byte[dis.available()];
+				dis.read(ret);
+				return (T) ret;
+			} else {
+				Schema<T> schema = (Schema<T>) getSchema(forName(className));
+				T ret = schema.newMessage();
+				mergeFrom(dis, ret, schema);
+				return ret;
+			}
 		}
-	}
-	
-	private <T> Schema<T> getSchema(Class<T> clz) {
-		@SuppressWarnings("unchecked")
-		Schema<T> schema = schemas.get(clz);
-		if (schema == null) {
-			schema = RuntimeSchema.getSchema(clz);
-			schemas.put(clz, schema);
-		}
-		return schema;
-	}
-
-	@Deprecated
-	@Override
-	public Object read(byte[] stream) throws Exception {
-		return null;
 	}
 
 }

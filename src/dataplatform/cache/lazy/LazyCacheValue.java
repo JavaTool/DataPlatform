@@ -42,7 +42,7 @@ public class LazyCacheValue<V> implements ILazyCacheValue<V> {
 
 	@Override
 	public void set(V value, boolean exists, long time, TimeUnit timeUnit) {
-		cacheValue.set(key.getKey(), value, exists, time, timeUnit);
+		cacheValue.xSet(key.getKey(), value, exists, time, timeUnit);
 	}
 
 }

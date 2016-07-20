@@ -1,23 +1,20 @@
 package dataplatform.cache.object;
 
 import dataplatform.cache.ICacheList;
-import dataplatform.coder.bytes.IBytesCoder;
+import dataplatform.coder.bytes.IStreamCoder;
 
 public class ObjectCacheList<K, V> extends StreamCoderCache implements ICacheList<K, V> {
 	
 	private final ICacheList<byte[], byte[]> cacheValue;
-	
-	private final Class<V> vclz;
 
-	public ObjectCacheList(ICacheList<byte[], byte[]> cacheValue, IBytesCoder bytesCoder, Class<V> vclz) {
-		super(bytesCoder);
+	public ObjectCacheList(ICacheList<byte[], byte[]> cacheValue, IStreamCoder streamCoder) {
+		super(streamCoder);
 		this.cacheValue = cacheValue;
-		this.vclz = vclz;
 	}
 
 	@Override
 	public V headPop(K key) {
-		return deserializa(cacheValue.headPop(serializa(key)), vclz);
+		return deserializa(cacheValue.headPop(serializa(key)));
 	}
 
 	@Override
@@ -27,7 +24,7 @@ public class ObjectCacheList<K, V> extends StreamCoderCache implements ICacheLis
 
 	@Override
 	public V get(K key, long index) {
-		return deserializa(cacheValue.get(serializa(key), index), vclz);
+		return deserializa(cacheValue.get(serializa(key), index));
 	}
 
 	@Override

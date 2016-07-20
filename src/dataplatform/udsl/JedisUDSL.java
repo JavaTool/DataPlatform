@@ -1,5 +1,8 @@
 package dataplatform.udsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Lists.newLinkedList;
+
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
@@ -7,17 +10,16 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import dataplatform.coder.bytes.ByteCoders;
-import dataplatform.coder.bytes.IBytesCoder;
+import dataplatform.cache.redis.IJedisReources;
+import dataplatform.coder.bytes.IStreamCoder;
+import dataplatform.coder.bytes.StreamCoders;
 import dataplatform.coder.string.IStringCoder;
 import dataplatform.coder.string.StringCoders;
 import redis.clients.jedis.Jedis;
 
-public abstract class JedisUDSL implements UDSL {
+public class JedisUDSL implements UDSL {
 	
 	protected static final Logger log = LoggerFactory.getLogger(JedisUDSL.class);
 	
@@ -26,9 +28,11 @@ public abstract class JedisUDSL implements UDSL {
 	@SuppressWarnings("rawtypes")
 	private static final Map<Class, IStringCoder> STRING_CODERS;
 	
-	private static final IBytesCoder BYTES_CODES;
+	private static final IStreamCoder BYTES_CODES;
 	
 	private final ICachedObjects cachedObject;
+	
+	private final IJedisReources jedisReources;
 	
 	static {
 		STRING_CODERS = Maps.newHashMap();
@@ -38,24 +42,13 @@ public abstract class JedisUDSL implements UDSL {
 		STRING_CODERS.put(Float.class, StringCoders.newFloatStringCoder());
 		STRING_CODERS.put(Long.class, StringCoders.newLongStringCoder());
 		STRING_CODERS.put(Short.class, StringCoders.newShortStringCoder());
-		BYTES_CODES = ByteCoders.newSerialableCoder();
+		BYTES_CODES = StreamCoders.newProtoStuffCoder();
 	}
 	
-	public JedisUDSL(ICachedObjects cachedObject) {
+	public JedisUDSL(ICachedObjects cachedObject, IJedisReources jedisReources) {
 		this.cachedObject = cachedObject;
+		this.jedisReources = jedisReources;
 	}
-	
-	/**
-	 * 获取Jedis
-	 * @return	Jedis
-	 */
-	public abstract Jedis getJedis();
-	/**
-	 * 使用结束处理
-	 * @param 	jedis
-	 * 			jedis
-	 */
-	public abstract void useFinish(Jedis jedis);
 	
 	private static <T> boolean isString(Class<T> clz) {
 		for (@SuppressWarnings("rawtypes") Class isStringClass : STRING_CODERS.keySet()) {
@@ -82,92 +75,119 @@ public abstract class JedisUDSL implements UDSL {
 		return bytes;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T fetch(Object... params) {
-		Jedis jedis = getJedis();
-		String key = (String) Preconditions.checkNotNull(params[0], "Do not have condition : {}", params[0]);
+		String key = (String) checkNotNull(params[0], "Do not have condition : {}", params[0]);
 		String name = (String) params[1];
+		@SuppressWarnings("unchecked")
 		Class<T> clz = (Class<T>) params[2];
-		if (isString(clz)) {
-			String value;
-			if (name == null || name.length() == 0) {
-				value = jedis.get(key);
+		return jedisReources.exec(jedis -> {
+			if (isString(clz)) {
+				return getFromString(jedis, key, name, clz);
 			} else {
-				value = jedis.hget(key, name);
+				return getFromBytes(jedis, key, name, clz);
 			}
-			return (T) castFromString(clz, value);
+		}, null);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> T getFromString(Jedis jedis, String key, String name, Class<T> clz) {
+		String value;
+		if (name == null || name.length() == 0) {
+			value = jedis.get(key);
 		} else {
-			byte[] bytes;
-			try {
-				if (name == null || name.length() == 0) {
-					bytes = jedis.get(stringToBytes(key));
-				} else {
-					bytes = jedis.hget(stringToBytes(key), stringToBytes(name));
-				}
-				return (T) BYTES_CODES.read(bytes);
-			} catch (Exception e) {
-				throw new RuntimeException(MessageFormat.format("JedisVisitor get/hget error on key / name : {} / {} ", key, name));
+			value = jedis.hget(key, name);
+		}
+		return (T) castFromString(clz, value);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> T getFromBytes(Jedis jedis, String key, String name, Class<T> clz) {
+		byte[] bytes;
+		try {
+			if (name == null || name.length() == 0) {
+				bytes = jedis.get(stringToBytes(key));
+			} else {
+				bytes = jedis.hget(stringToBytes(key), stringToBytes(name));
 			}
+			return (T) BYTES_CODES.read(bytes);
+		} catch (Exception e) {
+			throw new RuntimeException(MessageFormat.format("JedisVisitor get/hget error on key / name : {} / {} ", key, name));
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> List<T> find(Object... params) {
-		Jedis jedis = getJedis();
-		List<T> list = Lists.newLinkedList();
-		Object conditionKey = Preconditions.checkNotNull(params[0], "Do not have condition : {}", params[0]);
+		Object conditionKey = checkNotNull(params[0], "Do not have condition : {}", params[0]);
 		String[] names = (String[]) params[1];
 		Class<T> clz = (Class<T>) params[2];
-		if (isString(clz)) {
-			if (conditionKey instanceof String[]) {
-				jedis.mget((String[]) conditionKey).forEach(value -> list.add((T) value));
-			} else if (names == null) {
-				jedis.hgetAll(conditionKey.toString()).values().forEach(value -> list.add((T) value));
+		return jedisReources.exec(jedis -> {
+			List<T> list = newLinkedList();
+			if (isString(clz)) {
+				if (conditionKey instanceof String[]) {
+					jedis.mget((String[]) conditionKey).forEach(value -> list.add((T) value));
+				} else if (names == null) {
+					jedis.hgetAll(conditionKey.toString()).values().forEach(value -> list.add((T) value));
+				} else {
+					jedis.hmget(conditionKey.toString(), names).forEach(value -> list.add((T) value));
+				}
 			} else {
-				jedis.hmget(conditionKey.toString(), names).forEach(value -> list.add((T) value));
+				if (conditionKey instanceof String[]) {
+					getsFromStringArray(jedis, conditionKey, list);
+				} else if (names == null) {
+					getsFromAllHash(jedis, conditionKey, list);
+				} else {
+					getsFromHash(jedis, conditionKey, list, names);
+				}
 			}
-		} else {
-			if (conditionKey instanceof String[]) {
-				String[] keys = (String[]) conditionKey;
-				byte[][] keyBytes = stringsToBytes(keys);
-				jedis.mget(keyBytes).forEach((value) -> {
-					try {
-						list.add((T) BYTES_CODES.read(value));
-					} catch (Exception e) {
-						StringBuilder builder = new StringBuilder("JedisVisitor mget error on key : ");
-						for (String key : keys) {
-							builder.append(key).append(" ; ");
-						}
-						throw new RuntimeException(builder.toString());
-					}
-				});
-			} else if (names == null) {
-				jedis.hgetAll(stringToBytes(conditionKey.toString())).values().forEach((value) -> {
-					try {
-						list.add((T) BYTES_CODES.read(value));
-					} catch (Exception e) {
-						throw new RuntimeException(MessageFormat.format("JedisVisitor hgetAll error on key : {} ", conditionKey));
-					}
-				});
-			} else {
-				byte[][] nameBytes = stringsToBytes(names);
-				jedis.hmget(stringToBytes(conditionKey.toString()), nameBytes).forEach((value) -> {
-					try {
-						list.add((T) BYTES_CODES.read(value));
-					} catch (Exception e) {
-						StringBuilder builder = new StringBuilder("JedisVisitor hmget error on key : ");
-						builder.append(conditionKey).append(" / ");
-						for (String name : names) {
-							builder.append(name).append(" ; ");
-						}
-						throw new RuntimeException(builder.toString());
-					}
-				});
+			return list;
+		}, newLinkedList());
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static <T> void getsFromStringArray(Jedis jedis, Object conditionKey, List<T> list) {
+		String[] keys = (String[]) conditionKey;
+		byte[][] keyBytes = stringsToBytes(keys);
+		jedis.mget(keyBytes).forEach((value) -> {
+			try {
+				list.add((T) BYTES_CODES.read(value));
+			} catch (Exception e) {
+				StringBuilder builder = new StringBuilder("JedisVisitor mget error on key : ");
+				for (String key : keys) {
+					builder.append(key).append(" ; ");
+				}
+				throw new RuntimeException(builder.toString());
 			}
-		}
-		return list;
+		});
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static <T> void getsFromAllHash(Jedis jedis, Object conditionKey, List<T> list) {
+		jedis.hgetAll(stringToBytes(conditionKey.toString())).values().forEach((value) -> {
+			try {
+				list.add((T) BYTES_CODES.read(value));
+			} catch (Exception e) {
+				throw new RuntimeException(MessageFormat.format("JedisVisitor hgetAll error on key : {} ", conditionKey));
+			}
+		});
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static <T> void getsFromHash(Jedis jedis, Object conditionKey, List<T> list, String[] names) {
+		byte[][] nameBytes = stringsToBytes(names);
+		jedis.hmget(stringToBytes(conditionKey.toString()), nameBytes).forEach((value) -> {
+			try {
+				list.add((T) BYTES_CODES.read(value));
+			} catch (Exception e) {
+				StringBuilder builder = new StringBuilder("JedisVisitor hmget error on key : ");
+				builder.append(conditionKey).append(" / ");
+				for (String name : names) {
+					builder.append(name).append(" ; ");
+				}
+				throw new RuntimeException(builder.toString());
+			}
+		});
 	}
 
 	@Deprecated
@@ -184,50 +204,52 @@ public abstract class JedisUDSL implements UDSL {
 
 	@Override
 	public <T> void save(T entity) {
-		Jedis jedis = getJedis();
 		String key = cachedObject.makeKey(entity);
 		String name = cachedObject.makeField(entity);
-		if (isString(entity.getClass())) {
-			if (name == null || name.length() == 0) {
-				jedis.set(key, entity.toString());
-			} else {
-				jedis.hset(key, name, entity.toString());
-			}
-		} else {
-			try {
+		jedisReources.exec(jedis -> {
+			if (isString(entity.getClass())) {
 				if (name == null || name.length() == 0) {
-					jedis.set(stringToBytes(key), BYTES_CODES.write(entity));
+					jedis.set(key, entity.toString());
 				} else {
-					jedis.hset(stringToBytes(key), stringToBytes(name), BYTES_CODES.write(entity));
+					jedis.hset(key, name, entity.toString());
 				}
-			} catch (Exception e) {
-				throw new RuntimeException(MessageFormat.format("JedisVisitor set/hset error on key / name : {} / {} ", key, name));
+			} else {
+				try {
+					if (name == null || name.length() == 0) {
+						jedis.set(stringToBytes(key), BYTES_CODES.write(entity));
+					} else {
+						jedis.hset(stringToBytes(key), stringToBytes(name), BYTES_CODES.write(entity));
+					}
+				} catch (Exception e) {
+					throw new RuntimeException(MessageFormat.format("JedisVisitor set/hset error on key / name : {} / {} ", key, name));
+				}
 			}
-		}
+		});
 	}
 
 	@Override
 	public <T> void delete(T entity) {
-		Jedis jedis = getJedis();
 		String key = cachedObject.makeKey(entity);
 		String name = cachedObject.makeField(entity);
-		if (isString(entity.getClass())) {
-			if (name == null || name.length() == 0) {
-				jedis.del(key, entity.toString());
-			} else {
-				jedis.hdel(key, name, entity.toString());
-			}
-		} else {
-			try {
+		jedisReources.exec(jedis -> {
+			if (isString(entity.getClass())) {
 				if (name == null || name.length() == 0) {
-					jedis.del(stringToBytes(key), BYTES_CODES.write(entity));
+					jedis.del(key, entity.toString());
 				} else {
-					jedis.hdel(stringToBytes(key), stringToBytes(name), BYTES_CODES.write(entity));
+					jedis.hdel(key, name, entity.toString());
 				}
-			} catch (Exception e) {
-				throw new RuntimeException(MessageFormat.format("JedisVisitor del/hdel error on key / name : {} / {} ", key, name));
+			} else {
+				try {
+					if (name == null || name.length() == 0) {
+						jedis.del(stringToBytes(key), BYTES_CODES.write(entity));
+					} else {
+						jedis.hdel(stringToBytes(key), stringToBytes(name), BYTES_CODES.write(entity));
+					}
+				} catch (Exception e) {
+					throw new RuntimeException(MessageFormat.format("JedisVisitor del/hdel error on key / name : {} / {} ", key, name));
+				}
 			}
-		}
+		});
 	}
 
 }

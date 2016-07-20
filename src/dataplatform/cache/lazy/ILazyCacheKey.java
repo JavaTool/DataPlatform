@@ -1,9 +1,9 @@
 package dataplatform.cache.lazy;
 
-import dataplatform.cache.ICacheKey.ValueType;
-
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import dataplatform.cache.ICacheKey.ValueType;
 
 public interface ILazyCacheKey extends IKey {
 	
@@ -32,10 +32,8 @@ public interface ILazyCacheKey extends IKey {
 	 * EXPIREAT 的作用和 EXPIRE 类似，都用于为 key 设置生存时间。不同在于 EXPIREAT 命令接受的时间参数是 UNIX 时间戳(unix timestamp)。
 	 * @param 	timestamp
 	 * 			
-	 * @param 	timeUnit
-	 * 			
 	 */
-	void expireat(long timestamp, TimeUnit timeUnit);
+	void expireat(long timestamp);
 	/**
 	 * 查找所有符合给定模式 pattern 的 key 。
 	 * @param 	pattern

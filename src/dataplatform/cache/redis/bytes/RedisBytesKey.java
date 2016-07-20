@@ -1,19 +1,21 @@
 package dataplatform.cache.redis.bytes;
 
-import static dataplatform.util.DateUtil.toMilliTime;
+import static dataplatform.cache.ICacheKey.ValueType.None;
 import static dataplatform.cache.ICacheKey.ValueType.valueof;
+import static dataplatform.util.DateUtil.toMilliTime;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 
 import dataplatform.cache.ICacheKey;
 import dataplatform.cache.redis.ExistsJedisReources;
 import dataplatform.cache.redis.IJedisReources;
-import redis.clients.jedis.Jedis;
 
 public class RedisBytesKey extends ExistsJedisReources implements ICacheKey<byte[]> {
+	
+	private static final Set<byte[]> EMPTY_SET = ImmutableSet.of();
 	
 	public RedisBytesKey(IJedisReources jedisReources) {
 		setResouces(jedisReources);
@@ -21,116 +23,65 @@ public class RedisBytesKey extends ExistsJedisReources implements ICacheKey<byte
 
 	@Override
 	public void delete(Object... keys) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.del((byte[][]) keys);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
+		if (keys instanceof Object[]) {
+			if (keys.length > 0) {
+				byte[][] newKeys = new byte[keys.length][];
+				for (int i = 0;i < keys.length;i++) {
+					newKeys[i] = (byte[]) keys[i];
+				}
+				exec((jedis) -> jedis.del(newKeys));
+			}
+		} else {
+			exec((jedis) -> jedis.del((byte[][]) keys));
 		}
 	}
 
 	@Override
 	public boolean exists(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.exists(key);
-		} catch (Exception e) {
-			error("", e);
-			return false;
-		} finally {
-			useFinish(jedis);
-		}
+		}, false);
 	}
 
 	@Override
 	public void expire(byte[] key, long time, TimeUnit timeUnit) {
-		time = toMilliTime(time, timeUnit);
-		
-		Jedis jedis = getJedis();
-		try {
-			jedis.pexpire(key, time);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+		exec((jedis) -> jedis.pexpire(key, toMilliTime(time, timeUnit)));
 	}
 
 	@Override
-	public void expireat(byte[] key, long timestamp, TimeUnit timeUnit) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.pexpireAt(key, timestamp);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+	public void expireat(byte[] key, long timestamp) {
+		exec((jedis) -> jedis.pexpireAt(key, timestamp));
 	}
 
 	@Override
 	public Set<byte[]> keys(byte[] pattern) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.keys(pattern);
-		} catch (Exception e) {
-			error("", e);
-			return Sets.newHashSet();
-		} finally {
-			useFinish(jedis);
-		}
+		}, EMPTY_SET);
 	}
 
 	@Override
 	public void persist(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.persist(key);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+		exec((jedis) -> jedis.persist(key));
 	}
 
 	@Override
 	public long ttl(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.pttl(key);
-		} catch (Exception e) {
-			error("", e);
-			return 0;
-		} finally {
-			useFinish(jedis);
-		}
+		}, 0L);
 	}
 
 	@Override
 	public void rename(byte[] key, byte[] newkey) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.rename(key, newkey);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+		exec((jedis) -> jedis.rename(key, newkey));
 	}
 
 	@Override
 	public ValueType type(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return valueof(jedis.type(key));
-		} catch (Exception e) {
-			error("", e);
-			return ValueType.None;
-		} finally {
-			useFinish(jedis);
-		}
+		}, None);
 	}
 
 }

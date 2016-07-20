@@ -5,7 +5,7 @@ import dataplatform.cache.ICacheHash;
 import dataplatform.cache.ICacheKey;
 import dataplatform.cache.ICacheList;
 import dataplatform.cache.ICacheValue;
-import dataplatform.coder.bytes.IBytesCoder;
+import dataplatform.coder.bytes.IStreamCoder;
 
 public class ObjectCache<K, F, V> extends StreamCoderCache implements ICache<K, F, V> {
 	
@@ -17,12 +17,12 @@ public class ObjectCache<K, F, V> extends StreamCoderCache implements ICache<K, 
 	
 	private final ICacheValue<K, V> cacheValue;
 
-	public ObjectCache(ICache<byte[], byte[], byte[]> cache, IBytesCoder bytesCoder, Class<K> kclz, Class<F> fclz, Class<V> vclz) {
-		super(bytesCoder);
-		cacheKey = new ObjectCacheKey<>(cache.key(), bytesCoder, kclz);
-		cacheHash = new ObjectCacheHash<>(cache.hash(), bytesCoder, fclz, vclz);
-		cacheList = new ObjectCacheList<>(cache.list(), bytesCoder, vclz);
-		cacheValue = new ObjectCacheValue<>(cache.value(), bytesCoder, vclz);
+	public ObjectCache(ICache<byte[], byte[], byte[]> cache, IStreamCoder streamCoder) {
+		super(streamCoder);
+		cacheKey = new ObjectCacheKey<>(cache.key(), streamCoder);
+		cacheHash = new ObjectCacheHash<>(cache.hash(), streamCoder);
+		cacheList = new ObjectCacheList<>(cache.list(), streamCoder);
+		cacheValue = new ObjectCacheValue<>(cache.value(), streamCoder);
 	}
 
 	@Override

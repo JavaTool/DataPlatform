@@ -38,8 +38,8 @@ public class LazyCacheKey implements ILazyCacheKey {
 	}
 
 	@Override
-	public void expireat(long timestamp, TimeUnit timeUnit) {
-		cacheKey.expireat(key, timestamp, timeUnit);
+	public void expireat(long timestamp) {
+		cacheKey.expireat(key, timestamp);
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package dataplatform.cache.lazy;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import dataplatform.cache.ICacheHash;
 
@@ -33,7 +34,7 @@ public class LazyCacheHash<F, V> implements ILazyCacheHash<F, V> {
 
 	@Override
 	public List<V> get(Object... fields) {
-		return cacheHash.get(key.getKey(), fields);
+		return cacheHash.multiGet(key.getKey(), fields);
 	}
 
 	@Override
@@ -42,7 +43,7 @@ public class LazyCacheHash<F, V> implements ILazyCacheHash<F, V> {
 	}
 
 	@Override
-	public List<F> fields() {
+	public Set<F> fields() {
 		return cacheHash.fields(key.getKey());
 	}
 
@@ -53,7 +54,7 @@ public class LazyCacheHash<F, V> implements ILazyCacheHash<F, V> {
 
 	@Override
 	public void set(Map<F, V> map) {
-		cacheHash.set(key.getKey(), map);
+		cacheHash.multiSet(key.getKey(), map);
 	}
 
 	@Override

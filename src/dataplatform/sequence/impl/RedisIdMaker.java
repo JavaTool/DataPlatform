@@ -1,7 +1,6 @@
 package dataplatform.sequence.impl;
 
-import redis.clients.jedis.Jedis;
-import dataplatform.cache.redis.IJedisReources;
+import dataplatform.cache.ICache;
 import dataplatform.sequence.IInstanceIdMaker;
 
 /**
@@ -10,31 +9,24 @@ import dataplatform.sequence.IInstanceIdMaker;
  */
 public class RedisIdMaker implements IInstanceIdMaker {
 	
-	private final IJedisReources cache;
+	private final ICache<String, String, Integer> cache;
 	/**名称*/
 	private final String name;
 	
-	public RedisIdMaker(String name, IJedisReources cache, int baseValue) throws Exception {
+	public RedisIdMaker(String name, ICache<String, String, Integer> cache, int baseValue) {
 		this.cache = cache;
 		this.name = name;
-		Jedis jedis = cache.getJedis();
-		try {
-			if (!jedis.exists(name)) {
-				jedis.set(name, baseValue + "");
+		
+		if (!cache.key().exists(name)) {
+			for (int i = 0;i < baseValue;i++) {
+				nextInstanceId();
 			}
-		} finally {
-			cache.useFinish(jedis);
 		}
 	}
 
 	@Override
 	public int nextInstanceId() {
-		Jedis jedis = cache.getJedis();
-		try {
-			return jedis.incr(name).intValue();
-		} finally {
-			cache.useFinish(jedis);
-		}
+		return (int) cache.value().incr(name, 1);
 	}
 
 }

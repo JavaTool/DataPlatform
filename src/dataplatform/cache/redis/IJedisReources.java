@@ -4,16 +4,20 @@ import redis.clients.jedis.Jedis;
 
 public interface IJedisReources {
 	
-	/**
-	 * 获取Jedis
-	 * @return	Jedis
-	 */
-	Jedis getJedis();
-	/**
-	 * 使用结束处理
-	 * @param 	jedis
-	 * 			jedis
-	 */
-	void useFinish(Jedis jedis);
+	public static interface RedisExecutor<T> {
+		
+		T exec(Jedis jedis) throws Exception;
+		
+	}
+	
+	public static interface VoidRedisExecutor {
+		
+		void exec(Jedis jedis) throws Exception;
+		
+	}
+	
+	<T> T exec(RedisExecutor<T> run, T param);
+	
+	void exec(VoidRedisExecutor run);
 
 }

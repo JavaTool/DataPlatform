@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 
 /**
  * 日期工具
@@ -193,11 +195,15 @@ public final class DateUtil {
 		return TIMESTATE_CLOSED;
 	}
 	
-//	public static int getDays(Date date) {
-//		DateTime dateTime = new DateTime(date.getTime());
-//		LocalDate start = new LocalDate(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth());
-//		LocalDate end = new LocalDate();
-//		return Days.daysBetween(start, end).getDays();
-//	}
+	public static int getDays(Date date) {
+		DateTime dateTime = new DateTime(date.getTime());
+		LocalDate start = new LocalDate(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth());
+		LocalDate end = new LocalDate();
+		return Days.daysBetween(start, end).getDays();
+	}
+	
+	public static int getDays(DateTime dateTime){
+		return Days.daysBetween(dateTime, DateTime.now()).getDays();
+	}
 	
 }

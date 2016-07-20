@@ -2,16 +2,23 @@ package dataplatform.cache.redis.bytes;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import dataplatform.cache.ICacheHash;
 import dataplatform.cache.redis.ExistsJedisReources;
 import dataplatform.cache.redis.IJedisReources;
-import redis.clients.jedis.Jedis;
 
 public class RedisBytesHash extends ExistsJedisReources implements ICacheHash<byte[], byte[], byte[]> {
+	
+	private static final Set<byte[]> EMPTY_SET = ImmutableSet.of();
+	
+	private static final List<byte[]> EMPTY_LIST = ImmutableList.of();
+	
+	private static final Map<byte[], byte[]> EMPTY_MAP = ImmutableMap.of();
 	
 	public RedisBytesHash(IJedisReources jedisReources) {
 		setResouces(jedisReources);
@@ -19,129 +26,70 @@ public class RedisBytesHash extends ExistsJedisReources implements ICacheHash<by
 
 	@Override
 	public void remove(byte[] key, Object... fields) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.hdel(key, (byte[][]) fields);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
+		if (fields != null && fields.length > 0) {
+			exec((jedis) -> jedis.hdel(key, (byte[][]) fields));
 		}
 	}
 
 	@Override
 	public boolean contains(byte[] key, byte[] field) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.hexists(key, field);
-		} catch (Exception e) {
-			error("", e);
-			return false;
-		} finally {
-			useFinish(jedis);
-		}
+		}, false);
 	}
 
 	@Override
 	public byte[] get(byte[] key, byte[] field) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.hget(key, field);
-		} catch (Exception e) {
-			error("", e);
-			return null;
-		} finally {
-			useFinish(jedis);
-		}
+		}, null);
 	}
 
 	@Override
-	public List<byte[]> get(byte[] key, Object... fields) {
-		Jedis jedis = getJedis();
-		try {
+	public List<byte[]> multiGet(byte[] key, Object... fields) {
+		return exec((jedis) -> {
 			return jedis.hmget(key, (byte[][]) fields);
-		} catch (Exception e) {
-			error("", e);
-			return Lists.newArrayList();
-		} finally {
-			useFinish(jedis);
-		}
+		}, EMPTY_LIST);
 	}
 
 	@Override
 	public Map<byte[], byte[]> getAll(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.hgetAll(key);
-		} catch (Exception e) {
-			error("", e);
-			return Maps.newHashMap();
-		} finally {
-			useFinish(jedis);
-		}
+		}, EMPTY_MAP);
 	}
 
 	@Override
-	public List<byte[]> fields(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
-			return Lists.newArrayList(jedis.hkeys(key));
-		} catch (Exception e) {
-			error("", e);
-			return Lists.newArrayList();
-		} finally {
-			useFinish(jedis);
-		}
+	public Set<byte[]> fields(byte[] key) {
+		return exec((jedis) -> {
+			return jedis.hkeys(key);
+		}, EMPTY_SET);
 	}
 
 	@Override
 	public long size(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.hlen(key);
-		} catch (Exception e) {
-			error("", e);
-			return 0;
-		} finally {
-			useFinish(jedis);
-		}
+		}, 0L);
 	}
 
 	@Override
-	public void set(byte[] key, Map<byte[], byte[]> map) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.hmset(key, map);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
+	public void multiSet(byte[] key, Map<byte[], byte[]> map) {
+		if (map != null && map.size() > 0) {
+			exec((jedis) -> jedis.hmset(key, map));
 		}
 	}
 
 	@Override
 	public void set(byte[] key, byte[] field, byte[] value) {
-		Jedis jedis = getJedis();
-		try {
-			jedis.hset(key, field, value);
-		} catch (Exception e) {
-			error("", e);
-		} finally {
-			useFinish(jedis);
-		}
+		exec((jedis) -> jedis.hset(key, field, value));
 	}
 
 	@Override
 	public List<byte[]> values(byte[] key) {
-		Jedis jedis = getJedis();
-		try {
+		return exec((jedis) -> {
 			return jedis.hvals(key);
-		} catch (Exception e) {
-			error("", e);
-			return Lists.newArrayList();
-		} finally {
-			useFinish(jedis);
-		}
+		}, EMPTY_LIST);
 	}
 
 }

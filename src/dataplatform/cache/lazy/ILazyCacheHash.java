@@ -2,6 +2,7 @@ package dataplatform.cache.lazy;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ILazyCacheHash<F, V> {
 	
@@ -37,7 +38,7 @@ public interface ILazyCacheHash<F, V> {
 	 * 返回哈希表中的所有域。
 	 * @return	一个包含哈希表中所有域的表。
 	 */
-	List<F> fields();
+	Set<F> fields();
 	/**
 	 * 返回哈希表中域的数量。
 	 * @return	哈希表中域的数量。当不存在时，返回 0 。

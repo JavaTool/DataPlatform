@@ -2,23 +2,18 @@ package dataplatform.cache.object;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import dataplatform.cache.ICacheHash;
-import dataplatform.coder.bytes.IBytesCoder;
+import dataplatform.coder.bytes.IStreamCoder;
 
 public class ObjectCacheHash<T, F, V> extends StreamCoderCache implements ICacheHash<T, F, V> {
 	
 	private final ICacheHash<byte[], byte[], byte[]> cacheHash;
-	
-	private final Class<F> fclz;
-	
-	private final Class<V> vclz;
 
-	public ObjectCacheHash(ICacheHash<byte[], byte[], byte[]> cacheHash, IBytesCoder bytesCoder, Class<F> fclz, Class<V> vclz) {
-		super(bytesCoder);
+	public ObjectCacheHash(ICacheHash<byte[], byte[], byte[]> cacheHash, IStreamCoder streamCoder) {
+		super(streamCoder);
 		this.cacheHash = cacheHash;
-		this.fclz = fclz;
-		this.vclz = vclz;
 	}
 
 	@Override
@@ -33,22 +28,22 @@ public class ObjectCacheHash<T, F, V> extends StreamCoderCache implements ICache
 
 	@Override
 	public V get(T key, F field) {
-		return deserializa(cacheHash.get(serializa(key), serializa(field)), vclz);
+		return deserializa(cacheHash.get(serializa(key), serializa(field)));
 	}
 
 	@Override
-	public List<V> get(T key, Object... fields) {
-		return deserializa(cacheHash.get(serializa(key), serializa(fields)), vclz);
+	public List<V> multiGet(T key, Object... fields) {
+		return deserializa(cacheHash.multiGet(serializa(key), serializa(fields)));
 	}
 
 	@Override
 	public Map<F, V> getAll(T key) {
-		return deserializa(cacheHash.getAll(serializa(key)), fclz, vclz);
+		return deserializa(cacheHash.getAll(serializa(key)));
 	}
 
 	@Override
-	public List<F> fields(T key) {
-		return deserializa(cacheHash.fields(serializa(key)), fclz);
+	public Set<F> fields(T key) {
+		return deserializa(cacheHash.fields(serializa(key)));
 	}
 
 	@Override
@@ -57,8 +52,8 @@ public class ObjectCacheHash<T, F, V> extends StreamCoderCache implements ICache
 	}
 
 	@Override
-	public void set(T key, Map<F, V> map) {
-		cacheHash.set(serializa(key), serializa(map));
+	public void multiSet(T key, Map<F, V> map) {
+		cacheHash.multiSet(serializa(key), serializa(map));
 	}
 
 	@Override
@@ -68,7 +63,7 @@ public class ObjectCacheHash<T, F, V> extends StreamCoderCache implements ICache
 
 	@Override
 	public List<V> values(T key) {
-		return deserializa(cacheHash.values(serializa(key)), vclz);
+		return deserializa(cacheHash.values(serializa(key)));
 	}
 
 }

@@ -4,18 +4,15 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import dataplatform.cache.ICacheKey;
-import dataplatform.coder.bytes.IBytesCoder;
+import dataplatform.coder.bytes.IStreamCoder;
 
 public class ObjectCacheKey<T> extends StreamCoderCache implements ICacheKey<T> {
 	
 	private final ICacheKey<byte[]> cacheKey;
 	
-	private final Class<T> kclz;
-	
-	public ObjectCacheKey(ICacheKey<byte[]> cacheKey, IBytesCoder bytesCoder, Class<T> kclz) {
-		super(bytesCoder);
+	public ObjectCacheKey(ICacheKey<byte[]> cacheKey, IStreamCoder streamCoder) {
+		super(streamCoder);
 		this.cacheKey = cacheKey;
-		this.kclz = kclz;
 	}
 
 	@Override
@@ -34,13 +31,13 @@ public class ObjectCacheKey<T> extends StreamCoderCache implements ICacheKey<T> 
 	}
 
 	@Override
-	public void expireat(T key, long timestamp, TimeUnit timeUnit) {
-		cacheKey.expireat(serializa(key), timestamp, timeUnit);
+	public void expireat(T key, long timestamp) {
+		cacheKey.expireat(serializa(key), timestamp);
 	}
 
 	@Override
 	public Set<T> keys(T pattern) {
-		return deserializa(cacheKey.keys(serializa(pattern)), kclz);
+		return deserializa(cacheKey.keys(pattern.toString().getBytes()));
 	}
 
 	@Override
